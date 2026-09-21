@@ -1,7 +1,7 @@
 # Comp Sci 30 workin' stuff
 
 ## Demos
-- First demo here
+- [Chessboard Demo](Chessboard)
 
 ## Projects
 - First project here
