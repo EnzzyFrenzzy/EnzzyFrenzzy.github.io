@@ -1,7 +1,8 @@
 # Comp Sci 30 workin' stuff
 
 ## Demos
-- [Chessboard Demo](Chessboard)
+- [Chessboard Demo](chessboard)
+- [Circle Generator](circle-generator)
 
 ## Projects
 - First project here
