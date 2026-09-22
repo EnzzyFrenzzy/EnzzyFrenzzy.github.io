@@ -6,4 +6,4 @@
 - [Square Around Edge of Screen](square-around-edge)
 
 ## Projects
-- First project here
+- [Interactive Scene](interactive-scene)
