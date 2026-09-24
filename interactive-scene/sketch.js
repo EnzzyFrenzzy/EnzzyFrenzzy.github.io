@@ -8,8 +8,13 @@
 
 async function setup() {
   createCanvas(windowWidth, windowHeight);
+  background(220);
 }
 
 function draw() {
-  background(220);
+  
+}
+
+function textLine(str, ) {
+
 }
