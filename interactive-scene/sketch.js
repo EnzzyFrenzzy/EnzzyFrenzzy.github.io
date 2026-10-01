@@ -20,12 +20,17 @@ const TIME_CHANGE_AMOUNT = 0.01;
 const MAX_TIME = 24;
 const MIN_TIME = 0;
 
+let sceneForeground;
+let sceneBackground;
+
 let lanternOn = false;
 let dayCycleOn = true;
 let currentTime = 4;
 
 async function setup() {
   createCanvas(windowWidth, windowHeight);
+
+  // sceneBackground = await loadImage("\assets\SceneBackground.png"); -- SOMETHING WRONG HERE
 }
 
 function draw() {
@@ -40,7 +45,7 @@ function draw() {
 
 function updateCurrentTime() {
   if (dayCycleOn) {
-    currentTime += TIME_CHANGE_AMOUNT
+    currentTime += TIME_CHANGE_AMOUNT;
   }
 }
 function ensureCurrentTimeIsValid() {
@@ -92,7 +97,7 @@ function visualizeMoon() {
   let moonGlowRing = color(212, 235, 251, 25);
   let moonRingColor1 = color(201, 204, 205, 200);
   let moonRingColor2 = color(171, 175, 176, 255);
-  let moonCraterColor = color(77, 79, 81, 255);
+  let moonCraterColor = color(104, 107, 107, 255);
 
   fill(moonGlowRing);
   circle(0, 0, 125);
@@ -138,32 +143,3 @@ function keyPressed() {
     console.log(dayCycleOn);
   }
 }
-
-///// OTHER IDEA /////
-
-// const CURRENTLY_PLAYING = "Playing";
-// const WITHIN_MENU = "InMenu";
-
-// const TRANSITION_TIME = 0.5;
-// let lastTransitionTime;
-
-// let gameState = WITHIN_MENU;
-// let inTransition = false;
-// let transitionPosX = 0;
-
-// https://p5js.org/reference/p5/push/
-// function transition(newGameState) {
-//   if (inTransition) {
-//     return;
-//   }
-//   inTransition = true;
-
-//   if (millis() >= lastTransitionTime + (TRANSITION_TIME / 2)) {
-//     gameState = newGameState;
-//   }
-//   if (millis() >= lastTransitionTime + TRANSITION_TIME) {
-//     inTransition = false;
-//     lastTransitionTime = millis();
-//     transitionPosX = 0;
-//   }
-// }
