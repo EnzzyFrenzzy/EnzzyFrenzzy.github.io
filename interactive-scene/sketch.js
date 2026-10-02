@@ -20,22 +20,31 @@ const TIME_CHANGE_AMOUNT = 0.01;
 const MAX_TIME = 24;
 const MIN_TIME = 0;
 
+const DAYSTATE_DAY = "daytime (AM)";
+const DAYSTATE_NIGHT = "nightime (PM)";
+
 let sceneForeground;
 let sceneBackground;
 
 let lanternOn = false;
 let dayCycleOn = true;
 let currentTime = 4;
+let dayState;
 
 async function setup() {
   createCanvas(windowWidth, windowHeight);
 
-  // sceneBackground = await loadImage("\assets\SceneBackground.png"); -- SOMETHING WRONG HERE
+  updateCurrentTime();
+  ensureCurrentTimeIsValid();
+  updateDayState();
+
+  sceneBackground = await loadImage("assets/SceneBackground.png");
 }
 
 function draw() {
   updateCurrentTime();
   ensureCurrentTimeIsValid();
+  updateDayState();
 
   visualizeSky();
   visualizeSun();
@@ -55,6 +64,16 @@ function ensureCurrentTimeIsValid() {
   else if (currentTime > MAX_TIME) {
     currentTime = MIN_TIME;
   }
+}
+function updateDayState() {
+  if (currentTime < MAX_TIME / 2) {
+    dayState = DAYSTATE_DAY;
+  }
+  else {
+    dayState = DAYSTATE_NIGHT;
+  }
+
+  console.log(dayState);
 }
 
 function visualizeSky() {
@@ -121,7 +140,7 @@ function visualizeMoon() {
   pop();
 }
 function visualizeScene() {
-
+  image(sceneBackground, 0, 0, width, height);
 }
 
 function mouseWheel(event) {
