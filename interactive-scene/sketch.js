@@ -7,7 +7,6 @@
 
 // https://p5js.org/reference/ -- mouse references
 
-const LANTERN_KEYCODE = "f";
 const DAYCYCLE_KEYCODE = " ";
 
 const MOON_START_TIME = 18;
@@ -20,36 +19,64 @@ const TIME_CHANGE_AMOUNT = 0.01;
 const MAX_TIME = 24;
 const MIN_TIME = 0;
 
+const SUNRISE_START = 5;
+const MOONRISE_START = 16;
+const SUN_AND_MOON_RISE_ADDITIONAL = 3;
+
+const BACKGROUND_COLOR = (50, 50, 50);
+const SCREEN_TINT_AMOUNT = 200;
+
 const DAYSTATE_DAY = "daytime (AM)";
 const DAYSTATE_NIGHT = "nightime (PM)";
 
+// The lean is calculated in radians, NOT DEGREES
+const LANTERN_LEAN_INTENSITY = 0.05;
+const LANTERN_LEAN_LERP_INTENSITY = 0.2;
+const LANTERN_LEAN_MAX = 1;
+const LANTERN_SIZE_DIVIDER = 8;
+
 let sceneForeground;
 let sceneBackground;
+let lanternOffImage;
+let lanternOnImage;
 
-let lanternOn = false;
 let dayCycleOn = true;
 let currentTime = 4;
 let dayState;
 
+let dayTintStrength;
+let nightTintStrength;
+
+let lanternOn = false;
+let lanternLean = 0;
+
 async function setup() {
   createCanvas(windowWidth, windowHeight);
 
+  sceneBackground = await loadImage("assets/SceneBackground.png");
+  lanternOffImage = await loadImage("assets/LanternOff.png");
+  lanternOnImage = await loadImage("assets/LanternOn.png")
+
+  // to ensure everything is properly working before we start
   updateCurrentTime();
   ensureCurrentTimeIsValid();
   updateDayState();
-
-  sceneBackground = await loadImage("assets/SceneBackground.png");
+  updateTints();
+  updateLanternLean();
 }
 
 function draw() {
   updateCurrentTime();
   ensureCurrentTimeIsValid();
   updateDayState();
+  updateTints();
+  updateLanternLean();
 
   visualizeSky();
   visualizeSun();
   visualizeMoon();
   visualizeScene();
+  visualizeLantern();
 }
 
 function updateCurrentTime() {
@@ -72,12 +99,46 @@ function updateDayState() {
   else {
     dayState = DAYSTATE_NIGHT;
   }
+}
+function updateTints() {
+  if (dayState === DAYSTATE_DAY) {
+    let sunriseTimeNorm = norm(currentTime, SUNRISE_START, (SUNRISE_START + SUN_AND_MOON_RISE_ADDITIONAL));
+    let constrainedTimeNorm = constrain(sunriseTimeNorm, 0, 1);
 
-  console.log(dayState);
+    dayTintStrength = constrainedTimeNorm;
+    nightTintStrength = (1 - constrainedTimeNorm);
+  }
+  else if (dayState === DAYSTATE_NIGHT) {
+    let moonriseTimeNorm = norm(currentTime, MOONRISE_START, (MOONRISE_START + SUN_AND_MOON_RISE_ADDITIONAL));
+    let constrainedTimeNorm = constrain(moonriseTimeNorm, 0, 1);
+
+    nightTintStrength = constrainedTimeNorm;
+    dayTintStrength = (1 - constrainedTimeNorm);
+  }
+}
+function updateLanternLean() {
+  if (movedX > 0 || movedX < 0) {
+    lanternLean += (movedX * LANTERN_LEAN_INTENSITY);
+  }
+
+  lanternLean = constrain(lanternLean, -LANTERN_LEAN_MAX, LANTERN_LEAN_MAX);
+  lanternLean = lerp(lanternLean, 0, LANTERN_LEAN_LERP_INTENSITY);
 }
 
 function visualizeSky() {
-  background(120);
+  background(BACKGROUND_COLOR);
+
+  // daytime tint
+  push();
+  fill(108, 220, 233, (SCREEN_TINT_AMOUNT * dayTintStrength));
+  rect(0, 0, width, height);
+  pop();
+
+  // nightime tint
+  push();
+  fill(18, 24, 45, (SCREEN_TINT_AMOUNT * nightTintStrength));
+  rect(0, 0, width, height);
+  pop();
 }
 function visualizeSun() {
   let normalFromSunTime = norm(currentTime, SUN_START_TIME, SUN_STOP_TIME);
@@ -142,6 +203,31 @@ function visualizeMoon() {
 function visualizeScene() {
   image(sceneBackground, 0, 0, width, height);
 }
+function visualizeLantern() {
+  let lanternSize;
+
+  if (width > height) {
+    lanternSize = width / LANTERN_SIZE_DIVIDER
+  }
+  else {
+    lanternSize = height / LANTERN_SIZE_DIVIDER
+  }
+
+  push();
+  translate(mouseX, mouseY);
+  rotate(lanternLean);
+
+  let usedImage;
+  if (lanternOn) {
+    usedImage = lanternOnImage;
+  }
+  else {
+    usedImage = lanternOffImage;
+  }
+
+  image(usedImage, -(lanternSize / 2), 0, lanternSize, lanternSize);
+  pop();
+}
 
 function mouseWheel(event) {
   if (event.delta > 0) {
@@ -151,12 +237,10 @@ function mouseWheel(event) {
     currentTime += SPEEDUP_TIME_CHANGE_AMOUNT;
   }
 }
-
+function mouseClicked() {
+  lanternOn = !lanternOn;
+}
 function keyPressed() {
-  if (key === LANTERN_KEYCODE) {
-    lanternOn = !lanternOn;
-    console.log(lanternOn);
-  }
   if (key === DAYCYCLE_KEYCODE) {
     dayCycleOn = !dayCycleOn;
     console.log(dayCycleOn);
