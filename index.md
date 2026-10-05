@@ -6,6 +6,7 @@
 - [Square Around Edge of Screen](square-around-edge)
 - [Millis Demo](millis)
 - [Traffic Light](traffic-light)
+- [Bouncing Circles](bouncing-circles)
 
 ## Projects
 - [Interactive Scene](interactive-scene)
