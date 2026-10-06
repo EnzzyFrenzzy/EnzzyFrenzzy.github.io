@@ -7,6 +7,7 @@
 - [Millis Demo](millis)
 - [Traffic Light](traffic-light)
 - [Bouncing Circles](bouncing-circles)
+- [Perlin Noise](perlin-noise)
 
 ## Projects
 - [Interactive Scene](interactive-scene)
