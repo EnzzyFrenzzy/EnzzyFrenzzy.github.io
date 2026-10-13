@@ -8,6 +8,8 @@
 - [Traffic Light](traffic-light)
 - [Bouncing Circles](bouncing-circles)
 - [Perlin Noise](perlin-noise)
+- [Terrain Generation](terrain-generation)
+- [Collision Library](collision-library)
 
 ## Projects
 - [Interactive Scene](interactive-scene)

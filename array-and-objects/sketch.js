@@ -11,10 +11,15 @@
 // https://p5js.org/reference/p5/constants/WEBGL/
 
 
+
 async function setup() {
-  createCanvas(windowWidth, windowHeight);
+  createCanvas(windowWidth, windowHeight, WEBGL);
 }
 
 function draw() {
   background(220);
+
+  orbitControl();
+  translate(250, 0, 0); //moves our drawing origin to the top left corner
+  box();
 }
