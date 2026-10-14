@@ -20,7 +20,7 @@ function draw() {
 }
 
 function generateTerrain() {
-  let theWidth = width/NUMBER_OF_RECTS;
+  let theWidth = width / NUMBER_OF_RECTS;
   let time = 0;
   let deltaTime = 0.001;
   for (let i = 0; i < NUMBER_OF_RECTS; i++) {
