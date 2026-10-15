@@ -8,28 +8,62 @@
 // https://p5js.org/reference/p5/fontBounds/
 // https://p5js.org/reference/p5/object/
 
-const CENTER_OFFSET = 200;
+const CENTER_OFFSET_DIVISOR = 6;
+
+const TEXT_TIME_MIN = 5;
+const TEXT_TIME_MAX = 9;
+
+let centerOffsetX;
+let centerOffsetY;
 
 let textsOnScreen = [];
 
 async function setup() {
   createCanvas(windowWidth, windowHeight);
+
+  updateCenterOffsets();
+
+  for (let i = 0; i < 205; i++) {
+    textsOnScreen.push(spawnTextObject("Something", 50, 1));
+  }
+}
+
+// Makes the text not spawn outside of the users window
+function updateCenterOffsets() {
+  if (windowWidth > windowHeight) {
+    centerOffsetX = (windowHeight / CENTER_OFFSET_DIVISOR);
+    centerOffsetY = (windowHeight / CENTER_OFFSET_DIVISOR);
+  }
+  else {
+    centerOffsetX = (windowWidth / CENTER_OFFSET_DIVISOR);
+    centerOffsetY = (windowWidth / CENTER_OFFSET_DIVISOR);
+  }
 }
 
 function draw() {
   background(220);
+
+  for (let textObject of textsOnScreen) {
+    textMode("center");
+    text(textObject.text, textObject.xPos, textObject.yPos);
+
+    textObject.xPos += textObject.xDir * textObject.textSpeed;
+    textObject.yPos += textObject.yDir * textObject.textSpeed;
+  }
 }
 
+
 function spawnTextObject(text, textSize, textSpeed) {
-  let xPosChoices = [random(0, width /  2 - CENTER_OFFSET), random(width /  2 + CENTER_OFFSET, width)];
-  let yPosChoices = [random(0, height /  2 - CENTER_OFFSET), random(height /  2 + CENTER_OFFSET, height)];
+  let xPos = random(width / 2 - centerOffsetX, width / 2 + centerOffsetX);
+  let yPos = random(height / 2 - centerOffsetY, height / 2 + centerOffsetY);
 
   let textObject = {
-    xPos: random(xPosChoices),
-    yPos: random(yPosChoices),
+    xPos: xPos, // random(xPosChoices),
+    yPos: yPos, //random(yPosChoices),
     xDir: random(-1, 1),
     yDir: random(-1, 1),
 
+    textDuration: random(TEXT_TIME_MIN, TEXT_TIME_MAX),
     textSpeed: textSpeed,
     textSize: textSize,
     text: text,
