@@ -10,6 +10,10 @@
 
 const CENTER_OFFSET_DIVISOR = 6;
 
+const MAX_TEXT_FLUCTUATION_TIME = 99999;
+const MAX_TEXT_FLUCTUATION_SPEED = 0.1;
+const FLUCTUATION_INFLUENCE = 100;
+
 const TEXT_TIME_MIN = 5;
 const TEXT_TIME_MAX = 9;
 
@@ -24,7 +28,7 @@ async function setup() {
 
   updateCenterOffsets();
 
-  for (let i = 0; i < 1; i++) {
+  for (let i = 0; i < 100; i++) {
     textsOnScreen.push(spawnTextObject("Something", 50, 0.005));
   }
 }
@@ -48,8 +52,7 @@ function draw() {
     fluctuateTextObjectsDestination(textObject);
     showcaseTextObject(textObject);
 
-
-    textObject.textAlpha += textObject.textSpeed
+    textObject.textAlpha += textObject.textSpeed;
   }
 }
 
@@ -92,6 +95,9 @@ function spawnTextObject(text, textSize, textSpeed) {
     yStartPos: yStartPos,
     xDestination: xDestination,
     yDestination: yDestination,
+
+    textFluctuationTime: random(MAX_TEXT_FLUCTUATION_TIME),
+    fluctuationSpeed: random(MAX_TEXT_FLUCTUATION_SPEED),
 
     textDuration: random(TEXT_TIME_MIN, TEXT_TIME_MAX),
     textAlpha: 0,
