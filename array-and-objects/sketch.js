@@ -12,7 +12,7 @@ const CENTER_OFFSET_DIVISOR = 6;
 
 const MAX_TEXT_FLUCTUATION_TIME = 99999;
 const MAX_TEXT_FLUCTUATION_SPEED = 0.1;
-const FLUCTUATION_INFLUENCE = 100;
+const FLUCTUATION_INTENSITY = 100;
 
 const TEXT_TIME_MIN = 5;
 const TEXT_TIME_MAX = 9;
@@ -29,7 +29,7 @@ async function setup() {
   updateCenterOffsets();
 
   for (let i = 0; i < 100; i++) {
-    textsOnScreen.push(spawnTextObject("Something", 50, 0.005));
+    textsOnScreen.push(spawnTextObject("Something", 50, 0.01));
   }
 }
 
@@ -52,19 +52,36 @@ function draw() {
     fluctuateTextObjectsDestination(textObject);
     showcaseTextObject(textObject);
 
-    textObject.textAlpha += textObject.textSpeed;
+    updateTextObjectPosition(textObject);
+    updateTextObjectDuration(textObject);
   }
 }
 
 function fluctuateTextObjectsDestination(textObject) {
+  textObject.xFluctuation = noise(textObject.fluctuationTimeX) * FLUCTUATION_INTENSITY;
+  textObject.yFluctuation = noise(textObject.fluctuationTimeY) * FLUCTUATION_INTENSITY;
 
+  textObject.fluctuationTimeX += textObject.fluctuationSpeed;
+  textObject.fluctuationTimeY += textObject.fluctuationSpeed;
 }
 function showcaseTextObject(textObject) {
-  let xPos = lerp(textObject.xStartPos, textObject.xDestination + (250 * noise(textObject.textAlpha)), textObject.textAlpha);
-  let yPos = lerp(textObject.yStartPos, textObject.yDestination + (250 * noise(textObject.textAlpha)), textObject.textAlpha);
+  let xPos = lerp(textObject.xStartPos, (textObject.xDestination + textObject.xFluctuation), textObject.destinationAlpha);
+  let yPos = lerp(textObject.yStartPos, (textObject.yDestination + textObject.yFluctuation), textObject.destinationAlpha);
 
   textSize(textObject.textSize);
   text(textObject.text, xPos, yPos);
+}
+
+function updateTextObjectPosition(textObject) {
+  textObject.destinationAlpha += textObject.textSpeed;
+}
+function updateTextObjectDuration(textObject) {
+  textObject.currentDuration += deltaTime;
+
+  let overDuration = (textObject.textDuration > textObject.currentDuration);
+  if (overDuration) {
+
+  }
 }
 
 function spawnTextObject(text, textSize, textSpeed) {
@@ -87,20 +104,23 @@ function spawnTextObject(text, textSize, textSpeed) {
     yDestination = random((height / 2), height);
   }
 
-  console.log(xDestination)
-  console.log(yDestination)
-
   let textObject = {
     xStartPos: xStartPos,
     yStartPos: yStartPos,
+
     xDestination: xDestination,
     yDestination: yDestination,
+    destinationAlpha: 0,
 
-    textFluctuationTime: random(MAX_TEXT_FLUCTUATION_TIME),
-    fluctuationSpeed: random(MAX_TEXT_FLUCTUATION_SPEED),
+    // Text which are not fast shouldn't have lots of fluctuation
+    fluctuationSpeed: random(MAX_TEXT_FLUCTUATION_SPEED) * textSpeed,
+    fluctuationTimeX: random(MAX_TEXT_FLUCTUATION_TIME),
+    fluctuationTimeY: random(MAX_TEXT_FLUCTUATION_TIME),    
+    xFluctuation: xDestination,
+    yFluctuation: yDestination,
 
     textDuration: random(TEXT_TIME_MIN, TEXT_TIME_MAX),
-    textAlpha: 0,
+    currentDuration: 0,
 
     textSpeed: textSpeed,
     textSize: textSize,
