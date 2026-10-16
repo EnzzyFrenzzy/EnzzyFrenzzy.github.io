@@ -14,23 +14,39 @@ const MAX_TEXT_FLUCTUATION_TIME = 99999;
 const MAX_TEXT_FLUCTUATION_SPEED = 0.1;
 const FLUCTUATION_INTENSITY = 100;
 
-const TEXT_TIME_MIN = 5;
-const TEXT_TIME_MAX = 9;
+const TEXT_VISIBILITY_MIN = 0;
+const TEXT_VISIBILITY_MAX = 1;
+const TEXT_TIME_MIN = 4;
+const TEXT_TIME_MAX = 8;
+
+const TEXT_SPEED_MIN = 0.001;
+const TEXT_SPEED_MAX = 0.01;
+const TEXT_SIZE_MIN = 20;
+const TEXT_SIZE_MAX = 70;
+
+const HOVERED_OVER_TEXT_STYLE = "bold italic";
+const REGULAR_TEXT_STYLE = "normal";
+
+const MAX_TEXTS_ON_SCREEN = 16;
+const TEXT_ADDED_DEBOUNCE = 0.25;
+
+const POSSIBLE_TEXTS = [
+  "WHY", "HELLO", "THERE"
+];
+
+let spawnTextDebounce = TEXT_ADDED_DEBOUNCE;
+let hoveringOverText = false;
+let textsOnScreen = [];
+let selectedTexts = [];
 
 let centerOffsetX;
 let centerOffsetY;
 
-let textsOnScreen = [];
-
+////////// Main setup function
 async function setup() {
   createCanvas(windowWidth, windowHeight);
-  textMode("center");
 
   updateCenterOffsets();
-
-  for (let i = 0; i < 100; i++) {
-    textsOnScreen.push(spawnTextObject("Something", 50, 0.01));
-  }
 }
 
 // Makes the text not spawn outside of the users window
@@ -45,46 +61,38 @@ function updateCenterOffsets() {
   }
 }
 
+////////// Main draw function
 function draw() {
-  background(220);
+  background(125);
+  spawnTextObjects();
+  updateTextSpawnDebounce();
+  removeUnusableTextObjects();
 
   for (let textObject of textsOnScreen) {
-    fluctuateTextObjectsDestination(textObject);
     showcaseTextObject(textObject);
+    checkIfHoveringOverTextObject(textObject);
 
-    updateTextObjectPosition(textObject);
-    updateTextObjectDuration(textObject);
+    textObjectPerFrameUpdates(textObject);
+    updateTextObjectIsUsableState(textObject);
+    updateTextObjectVisibility(textObject);
+    fluctuateTextObjectsDestination(textObject);
   }
 }
 
-function fluctuateTextObjectsDestination(textObject) {
-  textObject.xFluctuation = noise(textObject.fluctuationTimeX) * FLUCTUATION_INTENSITY;
-  textObject.yFluctuation = noise(textObject.fluctuationTimeY) * FLUCTUATION_INTENSITY;
+function spawnTextObjects() {
+  let canSpawnText = (spawnTextDebounce <= 0) && ((textsOnScreen.length) < MAX_TEXTS_ON_SCREEN);
 
-  textObject.fluctuationTimeX += textObject.fluctuationSpeed;
-  textObject.fluctuationTimeY += textObject.fluctuationSpeed;
-}
-function showcaseTextObject(textObject) {
-  let xPos = lerp(textObject.xStartPos, (textObject.xDestination + textObject.xFluctuation), textObject.destinationAlpha);
-  let yPos = lerp(textObject.yStartPos, (textObject.yDestination + textObject.yFluctuation), textObject.destinationAlpha);
+  if (canSpawnText) {
+    let text = random(POSSIBLE_TEXTS);
+    let textSize = random(TEXT_SIZE_MIN, TEXT_SIZE_MAX);
+    let textSpeed = random(TEXT_SPEED_MIN, TEXT_SPEED_MAX);
 
-  textSize(textObject.textSize);
-  text(textObject.text, xPos, yPos);
-}
-
-function updateTextObjectPosition(textObject) {
-  textObject.destinationAlpha += textObject.textSpeed;
-}
-function updateTextObjectDuration(textObject) {
-  textObject.currentDuration += deltaTime;
-
-  let overDuration = (textObject.textDuration > textObject.currentDuration);
-  if (overDuration) {
-
+    let textObject = createTextObject(text, textSize, textSpeed);
+    textsOnScreen.push(textObject);
+    spawnTextDebounce = TEXT_ADDED_DEBOUNCE;
   }
 }
-
-function spawnTextObject(text, textSize, textSpeed) {
+function createTextObject(text, textSize, textSpeed) {
   let xStartPos = random(width / 2 - centerOffsetX, width / 2 + centerOffsetX);
   let yStartPos = random(height / 2 - centerOffsetY, height / 2 + centerOffsetY);
 
@@ -112,10 +120,13 @@ function spawnTextObject(text, textSize, textSpeed) {
     yDestination: yDestination,
     destinationAlpha: 0,
 
+    xPos: xStartPos,
+    yPos: yStartPos,
+
     // Text which are not fast shouldn't have lots of fluctuation
     fluctuationSpeed: random(MAX_TEXT_FLUCTUATION_SPEED) * textSpeed,
     fluctuationTimeX: random(MAX_TEXT_FLUCTUATION_TIME),
-    fluctuationTimeY: random(MAX_TEXT_FLUCTUATION_TIME),    
+    fluctuationTimeY: random(MAX_TEXT_FLUCTUATION_TIME),
     xFluctuation: xDestination,
     yFluctuation: yDestination,
 
@@ -125,41 +136,131 @@ function spawnTextObject(text, textSize, textSpeed) {
     textSpeed: textSpeed,
     textSize: textSize,
     text: text,
+
+    usable: true,
+    visibility: 0,
+    isHoveredOver: false,
   };
 
   return textObject;
 }
 
+function updateTextSpawnDebounce() {
+  spawnTextDebounce -= 1 / frameRate();
 
-// let textObject = {
-//   text: "Something",
-//   textSize: 75,
+  constrain(spawnTextDebounce, 0, TEXT_ADDED_DEBOUNCE);
+}
+function removeUnusableTextObjects() {
+  for (let textObject of textsOnScreen) {
+    let unusableTextObject = (textObject.usable === false && textObject.visibility <= TEXT_VISIBILITY_MIN);
 
-//   xStartPos: 0,
-//   yStartPos: 0,
-// };
-// let onScreenTexts = [];
+    if (unusableTextObject) {
+      let textObjectIndex = textsOnScreen.indexOf(textObject);
+      let validIndexFound = (textObjectIndex !== -1)
 
-// async function setup() {
-//   createCanvas(windowWidth, windowHeight);
+      // if there is an actual index found
+      if (validIndexFound) {
+        textsOnScreen.splice(textObjectIndex, 1);
+      }
+    }
+  }
+}
 
-//   textObject.xStartPos = windowWidth / 2
-//   textObject.yStartPos = windowHeight / 2
+function showcaseTextObject(textObject) {
+  let xPos = lerp(textObject.xStartPos, (textObject.xDestination + textObject.xFluctuation), textObject.destinationAlpha);
+  let yPos = lerp(textObject.yStartPos, (textObject.yDestination + textObject.yFluctuation), textObject.destinationAlpha);
 
-//   for (let i = 0; i < 100; i++) {
-//     onScreenTexts.push(textObject)
-//   }
-// }
+  push();
 
-// function draw() {
-//   background(220);
+  textAlign(CENTER);
+  textSize(textObject.textSize);
 
-//   for (let textObj of onScreenTexts) {
-//     textObj.xStartPos = constrain(textObj.xStartPos += random(-999, 999), -textObj.textSize, windowWidth);
-//     textObj.yStartPos = constrain(textObj.yStartPos += random(-999, 999), -textObj.textSize, windowHeight);
+  // the alpha is represented in a 0-255 range, not 0-1
+  let visibility = 255 * textObject.visibility
+  fill(255, 255, 255, visibility);
 
-//     textSize(textObj.textSize);
-//     text(textObj.text, textObj.xStartPos, textObject.yStartPos);
-//   }
-// }
+  if (textObject.isHoveredOver) {
+    textStyle(HOVERED_OVER_TEXT_STYLE);
+  }
+  else {
+    textStyle(REGULAR_TEXT_STYLE);
+  }
+
+  text(textObject.text, xPos, yPos);
+
+  pop();
+
+  textObject.xPos = xPos;
+  textObject.yPos = yPos;
+}
+function checkIfHoveringOverTextObject(textObject) { // SOMETHING WRONG HERE
+  let sizeOfText = textObject.textSize;
+  let text = textObject.text;
+
+  let xPos = textObject.xPos;
+  let yPos = textObject.yPos;
+
+  push();
+
+  textSize(sizeOfText);
+
+  // the withinBoundsY looks different since the y isnt actually in
+  // the center, but on the top. (withinBoundsX is in the center though)
+  let bounds = fontBounds(text, xPos, yPos);
+  let withinBoundsX = (mouseX > bounds.x - (bounds.w / 2)) && (mouseX < bounds.x + (bounds.w / 2));
+  let withinBoundsY = (mouseY > bounds.y) && (mouseY < bounds.y + bounds.h);
+
+  if (hoveringOverText === false) {
+    // If we dont split this if statement up, then it'll switch
+    // between true/false
+    if (withinBoundsX && withinBoundsY) {
+      hoveringOverText = true;
+      textObject.isHoveredOver = true;
+    }
+  }
+  else {
+    hoveringOverText = false;
+    textObject.isHoveredOver = false; // just in case
+  }
+
+  console.log(hoveringOverText);
+  pop();
+}
+
+function textObjectPerFrameUpdates(textObject) {
+  textObject.destinationAlpha += textObject.textSpeed;
+  textObject.currentDuration += 1 / frameRate();
+}
+function updateTextObjectIsUsableState(textObject) {
+  let overDuration = (textObject.textDuration < textObject.currentDuration);
+  if (overDuration) {
+    textObject.usable = false;
+  }
+
+  let outsideBoundingX = (textObject.xPos < 0 || textObject.xPos > width);
+  let outsideBoundingY = (textObject.yPos < 0 || textObject.yPos > height);
+  if (outsideBoundingX || outsideBoundingY) {
+    textObject.usable = false;
+  }
+}
+function updateTextObjectVisibility(textObject) {
+  let newVisibility = textObject.visibility;
+
+  if (textObject.usable) {
+    newVisibility += 1 / frameRate();
+  }
+  else {
+    newVisibility -= 1 / frameRate();
+  }
+
+  textObject.visibility = constrain(newVisibility, TEXT_VISIBILITY_MIN, TEXT_VISIBILITY_MAX);
+}
+function fluctuateTextObjectsDestination(textObject) {
+  textObject.xFluctuation = noise(textObject.fluctuationTimeX) * FLUCTUATION_INTENSITY;
+  textObject.yFluctuation = noise(textObject.fluctuationTimeY) * FLUCTUATION_INTENSITY;
+
+  textObject.fluctuationTimeX += textObject.fluctuationSpeed;
+  textObject.fluctuationTimeY += textObject.fluctuationSpeed;
+}
+
 
