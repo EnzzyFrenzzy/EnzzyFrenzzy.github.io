@@ -29,15 +29,23 @@ const REGULAR_TEXT_STYLE = "normal";
 
 const MAX_TEXTS_ON_SCREEN = 16;
 const TEXT_ADDED_DEBOUNCE = 0.25;
+const BLANK_WORD = "";
 
+const WORDS_IN_SENTENCE_MAX = 4;
+const WORDS_IN_SENTENCE_MIN = 1;
 const POSSIBLE_TEXTS = [
   "WHY", "HELLO", "THERE"
 ];
 
 let spawnTextDebounce = TEXT_ADDED_DEBOUNCE;
+let currentWordHoveredOver = BLANK_WORD;
 let hoveringOverText = false;
+
+let canRegenerateSentence = true;
+let sentenceToMatch = [];
+
+let selectedWords = [];
 let textsOnScreen = [];
-let selectedTexts = [];
 
 let centerOffsetX;
 let centerOffsetY;
@@ -47,6 +55,7 @@ async function setup() {
   createCanvas(windowWidth, windowHeight);
 
   updateCenterOffsets();
+  generateSentenceToMatch();
 }
 
 // Makes the text not spawn outside of the users window
@@ -60,6 +69,23 @@ function updateCenterOffsets() {
     centerOffsetY = (windowWidth / CENTER_OFFSET_DIVISOR);
   }
 }
+function generateSentenceToMatch() {
+  if (canRegenerateSentence) {
+    let newSentenceLength = Math.round(random(WORDS_IN_SENTENCE_MIN, WORDS_IN_SENTENCE_MAX));
+    let newSentence = [];
+    
+    for (let i = 0; i < newSentenceLength; i++) {
+      let randomWord = random(POSSIBLE_TEXTS);
+
+      newSentence.push(randomWord);
+    }
+
+    sentenceToMatch = newSentence;
+    canRegenerateSentence = false;
+
+    console.log(sentenceToMatch);
+  }
+}
 
 ////////// Main draw function
 function draw() {
@@ -68,6 +94,7 @@ function draw() {
   updateTextSpawnDebounce();
   removeUnusableTextObjects();
   resetHoveringOverTextState();
+  generateSentenceToMatch();
 
   for (let textObject of textsOnScreen) {
     showcaseTextObject(textObject);
@@ -172,6 +199,7 @@ function resetHoveringOverTextState() {
   // be more easily understood what it means.
 
   hoveringOverText = false;
+  currentWordHoveredOver = BLANK_WORD;
 }
 
 function showcaseTextObject(textObject) {
@@ -219,8 +247,10 @@ function checkIfHoveringOverTextObject(textObject) {
   let withinBoundsY = (mouseY > bounds.y) && (mouseY < bounds.y + bounds.h);
 
   if (!hoveringOverText && withinBoundsX && withinBoundsY) {
-    hoveringOverText = true;
     textObject.isHoveredOver = true;
+
+    currentWordHoveredOver = textObject.text;
+    hoveringOverText = true;
   }
   else {
     // dont include "hoveringOverText" change here, since that would
@@ -268,4 +298,34 @@ function fluctuateTextObjectsDestination(textObject) {
   textObject.fluctuationTimeY += textObject.fluctuationSpeed;
 }
 
+////////// Main on mouse-pressed function
+function mousePressed() {
+  if (mouseButton.left) {
+    let canAddWord = hoveringOverText && (currentWordHoveredOver !== BLANK_WORD);
 
+    if (canAddWord) {
+      selectedWords.push(currentWordHoveredOver);
+    }
+  }
+  else if (mouseButton.center) {
+    selectedWords.pop();
+  }
+
+  console.log(selectedWords);
+}
+
+////////// Main on key-pressed function
+function keyPressed() {
+  if (key === ENTER) {
+    let userWordsMatchSentence = (selectedWords === sentenceToMatch);
+
+    if (userWordsMatchSentence) {
+      console.log("Success!");
+    }
+    else {
+      console.log("Unsuccessful!");
+    }
+
+    canRegenerateSentence = true;
+  }
+}
