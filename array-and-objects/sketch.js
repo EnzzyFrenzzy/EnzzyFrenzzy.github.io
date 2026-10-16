@@ -67,6 +67,7 @@ function draw() {
   spawnTextObjects();
   updateTextSpawnDebounce();
   removeUnusableTextObjects();
+  resetHoveringOverTextState();
 
   for (let textObject of textsOnScreen) {
     showcaseTextObject(textObject);
@@ -166,6 +167,13 @@ function removeUnusableTextObjects() {
   }
 }
 
+function resetHoveringOverTextState() {
+  // Although this is one line, the name of the function allows it to
+  // be more easily understood what it means.
+
+  hoveringOverText = false;
+}
+
 function showcaseTextObject(textObject) {
   let xPos = lerp(textObject.xStartPos, (textObject.xDestination + textObject.xFluctuation), textObject.destinationAlpha);
   let yPos = lerp(textObject.yStartPos, (textObject.yDestination + textObject.yFluctuation), textObject.destinationAlpha);
@@ -193,7 +201,7 @@ function showcaseTextObject(textObject) {
   textObject.xPos = xPos;
   textObject.yPos = yPos;
 }
-function checkIfHoveringOverTextObject(textObject) { // SOMETHING WRONG HERE
+function checkIfHoveringOverTextObject(textObject) {
   let sizeOfText = textObject.textSize;
   let text = textObject.text;
 
@@ -210,20 +218,17 @@ function checkIfHoveringOverTextObject(textObject) { // SOMETHING WRONG HERE
   let withinBoundsX = (mouseX > bounds.x - (bounds.w / 2)) && (mouseX < bounds.x + (bounds.w / 2));
   let withinBoundsY = (mouseY > bounds.y) && (mouseY < bounds.y + bounds.h);
 
-  if (hoveringOverText === false) {
-    // If we dont split this if statement up, then it'll switch
-    // between true/false
-    if (withinBoundsX && withinBoundsY) {
-      hoveringOverText = true;
-      textObject.isHoveredOver = true;
-    }
+  if (!hoveringOverText && withinBoundsX && withinBoundsY) {
+    hoveringOverText = true;
+    textObject.isHoveredOver = true;
   }
   else {
-    hoveringOverText = false;
-    textObject.isHoveredOver = false; // just in case
+    // dont include "hoveringOverText" change here, since that would
+    // make it switch between true/false within the for loop.
+
+    textObject.isHoveredOver = false;
   }
 
-  console.log(hoveringOverText);
   pop();
 }
 
