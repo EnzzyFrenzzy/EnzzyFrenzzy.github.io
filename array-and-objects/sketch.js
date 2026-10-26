@@ -9,7 +9,8 @@
 const CENTER_OFFSET_DIVISOR = 6;
 
 const MAX_TEXT_FLUCTUATION_TIME = 99999;
-const MAX_TEXT_FLUCTUATION_SPEED = 0.1;
+const MAX_TEXT_FLUCTUATION_SPEED = 1.25;
+const MIN_TEXT_FLUCTUATION_SPEED = 0.5;
 const FLUCTUATION_INTENSITY = 100;
 
 const TEXT_VISIBILITY_MIN = 0;
@@ -17,10 +18,10 @@ const TEXT_VISIBILITY_MAX = 1;
 const TEXT_TIME_MIN = 3;
 const TEXT_TIME_MAX = 6;
 
-const TEXT_SPEED_MIN = 0.001;
-const TEXT_SPEED_MAX = 0.01;
-const TEXT_SIZE_MIN = 20;
-const TEXT_SIZE_MAX = 70;
+const TEXT_SPEED_MIN = 0.0025;
+const TEXT_SPEED_MAX = 0.0075;
+const TEXT_SIZE_MIN = 16;
+const TEXT_SIZE_MAX = 50;
 
 const HOVERED_OVER_TEXT_STYLE = "bold";
 const HOVERED_OVER_TEXT_STROKE = 8;
@@ -35,23 +36,29 @@ const INSTRUCTION_TEXT_STROKE = 6;
 const INSTRUCTION_TEXT_SIZE = 20;
 const INSTRUCTION_SPACING = 32;
 
-const WORD_SPACING = " "
+const WORD_SPACING = " ";
 const YOUR_SENTENCE = "Your sentence:   ";
 const GENERATED_SENTENCE = "Sentence to Match:   ";
-const SUCCESS = "Successful!"
-const FAILURE = "Incorrect"
+const SUCCESS = "Successful!";
+const FAILURE = "Incorrect";
 
 const SHOW_RESULT_DURATION = 1;
 
 // CHANGE THESE CONSTANTS TO CHANGE
 // HOW DIFFICULT OR EASY THE GAME IS
 /////////////////////////////////
-const MAX_TEXTS_ON_SCREEN = 35;
-const TEXT_ADDED_DEBOUNCE = 0.2;
+const MAX_TEXTS_ON_SCREEN = 60;
+const TEXT_ADDED_DEBOUNCE = 0.075;
 const BLANK_WORD = "";
 
 const WORDS_IN_SENTENCE_MAX = 8;
 const WORDS_IN_SENTENCE_MIN = 3;
+
+// Always ensure the color of the background can
+// NEVER be the same color as the text objects
+const BACKGROUND_COLOR = 100;
+const TEXT_OBJECT_COLOR_MIN = 150;
+const TEXT_OBJECT_COLOR_MAX = 225;
 
 // Try to keep these more basic, common words.
 // Since once it gets complex, it gets difficult
@@ -63,7 +70,10 @@ const POSSIBLE_TEXTS = [
   "friend", "stay", "happy", "keep", "going", "you",
   "got", "this", "good", "luck", "dream", "big",
   "smile", "more", "worry", "less", "love", "your",
-  "life", "be", "yourself", "stay", "strong", "never"
+  "life", "be", "yourself", "stay", "strong", "never",
+  "remember", "tomorrow", "happiness", "search", "great",
+  "a", "little", "I", "of", "me",
+  "to", "for", "onto", "so", "try"
 ];
 /////////////////////////////////
 
@@ -166,7 +176,7 @@ function visualizeInstructions() {
 }
 
 function draw() {
-  background(125);
+  background(BACKGROUND_COLOR);
   spawnTextObjects();
   updateTextSpawnDebounce();
   removeUnusableTextObjects();
@@ -235,7 +245,7 @@ function createTextObject(text, textSize, textSpeed) {
     yPos: yStartPos,
 
     // Text which are not fast shouldn't have lots of fluctuation
-    fluctuationSpeed: random(MAX_TEXT_FLUCTUATION_SPEED) * textSpeed,
+    fluctuationSpeed: random(MIN_TEXT_FLUCTUATION_SPEED, MAX_TEXT_FLUCTUATION_SPEED) * textSpeed,
     fluctuationTimeX: random(MAX_TEXT_FLUCTUATION_TIME),
     fluctuationTimeY: random(MAX_TEXT_FLUCTUATION_TIME),
     xFluctuation: xDestination,
@@ -244,6 +254,7 @@ function createTextObject(text, textSize, textSpeed) {
     textDuration: random(TEXT_TIME_MIN, TEXT_TIME_MAX),
     currentDuration: 0,
 
+    textColor: random(TEXT_OBJECT_COLOR_MIN, TEXT_OBJECT_COLOR_MAX),
     textSpeed: textSpeed,
     textSize: textSize,
     text: text,
@@ -269,7 +280,7 @@ function removeUnusableTextObjects() {
 
     if (unusableTextObject) {
       let textObjectIndex = textsOnScreen.indexOf(textObject);
-      let validIndexFound = (textObjectIndex !== -1)
+      let validIndexFound = (textObjectIndex !== -1);
 
       // if there is an actual index found
       if (validIndexFound) {
@@ -299,8 +310,8 @@ function showcaseTextObject(textObject) {
   textSize(textObject.textSize);
 
   // the alpha is represented in a 0-255 range, not 0-1
-  let visibility = 255 * textObject.visibility
-  fill(255, 255, 255, visibility);
+  let visibility = 255 * textObject.visibility;
+  fill(textObject.textColor, textObject.textColor, textObject.textColor, visibility);
 
   if (textObject.isHoveredOver) {
     textStyle(HOVERED_OVER_TEXT_STYLE);
