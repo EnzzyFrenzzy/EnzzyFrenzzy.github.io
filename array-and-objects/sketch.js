@@ -29,7 +29,7 @@ const REGULAR_TEXT_STROKE = 0;
 
 // All the instructions given to the player
 const ADD_WORD_INSTRUCTION_TEXT = "Left-click on a word to add it to your list.";
-const REMOVE_WORD_INSTRUCTION_TEXT = "Right-click to remove the last word in your list.";
+const REMOVE_WORD_INSTRUCTION_TEXT = "Middle-click to remove the last word in your list.";
 const SUBMITTION_INSTRUCTION_TEXT = "Once done, press ENTER and see if your list matches the sentence given.";
 const INSTRUCTION_TEXT_STROKE = 6;
 const INSTRUCTION_TEXT_SIZE = 20;
