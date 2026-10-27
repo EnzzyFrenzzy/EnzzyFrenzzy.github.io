@@ -10,6 +10,7 @@
 - [Perlin Noise](perlin-noise)
 - [Terrain Generation](terrain-generation)
 - [Collision Library](collision-library)
+- [Grid Demo](grid-via-arrays)
 
 ## Projects
 - [Interactive Scene](interactive-scene)
