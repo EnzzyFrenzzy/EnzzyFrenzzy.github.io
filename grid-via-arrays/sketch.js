@@ -70,3 +70,20 @@ function visualizeGrid() {
     }
   }
 }
+
+function mousePressed() {
+  let column = Math.floor(mouseY / squareSize);
+  let row = Math.floor(mouseX / squareSize);
+
+  console.log(column, row);
+  toggleCell(column, row);
+}
+
+function toggleCell(column, row) {
+  if (grid[column][row] === 1) {
+    grid[column][row] = 0;
+  }
+  else if (grid[column][row] === 0) {
+    grid[column][row] = 1;
+  }
+}

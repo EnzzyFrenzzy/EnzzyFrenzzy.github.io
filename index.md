@@ -11,6 +11,7 @@
 - [Terrain Generation](terrain-generation)
 - [Collision Library](collision-library)
 - [Grid Demo](grid-via-arrays)
+- [Rectangular Grid](rectangular-grid)
 
 ## Projects
 - [Interactive Scene](interactive-scene)
