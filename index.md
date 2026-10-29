@@ -16,3 +16,4 @@
 ## Projects
 - [Interactive Scene](interactive-scene)
 - [Arrays and Object Notation](array-and-objects)
+- [Pac-Man](2d-grid-game)
