@@ -8,7 +8,8 @@
 // (As in no dead ends, and a way for the player to go from one 
 // side to another)
 
-let gameBoard;
+class Player {};
+class Ghost {};
 
 async function setup() {
   createCanvas(windowWidth, windowHeight);

@@ -12,6 +12,7 @@
 - [Collision Library](collision-library)
 - [Grid Demo](grid-via-arrays)
 - [Rectangular Grid](rectangular-grid)
+- [Game of Life](game-of-life)
 
 ## Projects
 - [Interactive Scene](interactive-scene)
