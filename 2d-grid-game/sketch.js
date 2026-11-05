@@ -9,10 +9,10 @@ const WATER_INDEX = 1;
 const OBJECT_INDEX = 2;
 
 const OBJECT_OUTLINE_COLOR = 0;
-const OBJECT_SIZE = 5;
+const OBJECT_SIZE = 2;
 
 // MAIN CONSTANTS
-const CELL_SIZE = 40;
+const CELL_SIZE = 10;
 
 let columns;
 let rows;
