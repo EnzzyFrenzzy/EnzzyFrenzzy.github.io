@@ -13,6 +13,7 @@
 - [Grid Demo](grid-via-arrays)
 - [Rectangular Grid](rectangular-grid)
 - [Game of Life](game-of-life)
+- [Character on a Grid](character-grid)
 
 ## Projects
 - [Interactive Scene](interactive-scene)
