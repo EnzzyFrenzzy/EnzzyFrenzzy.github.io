@@ -1,4 +1,4 @@
-// 2D rectangular Grid
+// 2D character in Grid
 // and Edge-case checking
 
 const CELL_SIZE = 50;
@@ -14,10 +14,16 @@ let thePlayer = {
   y: 0,
 };
 
+let grassImage;
+let stoneImage;
+
 async function setup() {
   createCanvas(windowWidth, windowHeight);
 
   calculateGrid();
+
+  grassImage = await loadImage("Grass.JPG");
+  stoneImage = await loadImage("Stone.JPG");
 }
 
 function calculateGrid() {
@@ -69,16 +75,15 @@ function visualizeGrid() {
   for (let col = 0; col < columns; col++) {
     for (let row = 0; row < rows; row++) {
       if (grid[col][row] === OPEN_TILE) {
-        fill("white");
+        image(grassImage, row * CELL_SIZE, col * CELL_SIZE, CELL_SIZE, CELL_SIZE);
       }
       else if (grid[col][row] === WALL_TILE) {
-        fill("black");
+        image(stoneImage, row * CELL_SIZE, col * CELL_SIZE, CELL_SIZE, CELL_SIZE);
       }
       else if (grid[col][row] === PLAYER_TILE) {
         fill("red");
+        square(row * CELL_SIZE, col * CELL_SIZE, CELL_SIZE);
       }
-
-      square(row * CELL_SIZE, col * CELL_SIZE, CELL_SIZE);
     }
   }
 }

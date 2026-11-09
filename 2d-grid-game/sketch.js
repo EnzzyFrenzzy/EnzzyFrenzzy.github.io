@@ -6,107 +6,107 @@
 
 // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Using_classes
 
-class String {
-  // #stringOrigin;
-  
-  constructor(x1, y1, x2, y2) {
-    // this.#stringOrigin = (x1, y1);
-  }
-  // test() {
-  //   console.log(this.#stringOrigin);
-  // }
+
+
+// class SoundString {
+//   #maxAmplitude;
+//   #maxSpeed;
+
+//   #stringStart;
+//   #stringEnd;
+
+//   #waveAmplitude;
+//   #wavePeriodSize;
+//   #waveSpeed;
+
+//   constructor(x1, y1, x2, y2) {
+//     this.#stringStart = [x1, y1];
+//     this.#stringEnd = [x2, y2];
+//   }
+
+//   something() {
+//     console.log(this.#stringStart);
+//   }
+// }
+
+// let newString = new SoundString(1, 2, 3, 4).something();
+
+//////////////////////////////
+
+// 2D rectangular Grid
+// and Edge-case checking
+
+const BLANK_TILE = 0;
+const FILLED_TILE = 1;
+
+const CELL_SIZE = 50;
+
+let columns;
+let rows;
+let grid;
+
+async function setup() {
+  createCanvas(windowWidth, windowHeight);
+
+  calculateGrid();
 }
 
-// const AIR_INDEX = 0;
-// const WATER_INDEX = 1;
-// const OBJECT_INDEX = 2;
+function calculateGrid() {
+  columns = Math.floor(height / CELL_SIZE);
+  rows = Math.floor(width / CELL_SIZE);
 
-// const OBJECT_OUTLINE_COLOR = 0;
-// const OBJECT_SIZE = 2;
+  grid = generateEmptyGrid(columns, rows);
+}
+function generateEmptyGrid(columns, rows) {
+  let newGrid = [];
 
-// // MAIN CONSTANTS
-// const CELL_SIZE = 10;
+  for (let col = 0; col < columns; col++) {
+    newGrid.push([]);
 
-// let columns;
-// let rows;
-// let grid;
+    for (let row = 0; row < rows; row++) {
+      newGrid[col].push(BLANK_TILE);
+    }
+  }
 
-// async function setup() {
-//   createCanvas(windowWidth, windowHeight);
+  return newGrid;
+}
 
-//   calculateGrid();
-// }
+function draw() {
+  background(220);
 
-// function calculateGrid() {
-//   columns = Math.floor(height / CELL_SIZE);
-//   rows = Math.floor(width / CELL_SIZE);
+  updateGrid();
+  visualizeGrid();
+}
 
-//   grid = generateEmptyGrid(columns, rows);
-// }
+function updateGrid() {}
+function visualizeGrid() {
+  for (let col = 0; col < columns; col++) {
+    for (let row = 0; row < rows; row++) {
+      if (grid[col][row] === BLANK_TILE) {
+        fill("white");
+      }
+      else if (grid[col][row] === FILLED_TILE) {
+        fill("black");
+      }
 
-// function generateEmptyGrid(columns, rows) {
-//   let newGrid = [];
+      square(row * CELL_SIZE, col * CELL_SIZE, CELL_SIZE);
+    }
+  }
+}
 
-//   for (let col = 0; col < columns; col++) {
-//     newGrid.push([]);
+function keyPressed() {
+}
+function mousePressed() {
+}
 
-//     for (let row = 0; row < rows; row++) {
-//       newGrid[col].push(0);
-//     }
-//   }
-
-//   return newGrid;
-// }
-
-// function draw() {
-//   background(220);
-
-//   visualizeGrid();
-// }
-
-// function visualizeGrid() {
-//   for (let col = 0; col < columns; col++) {
-//     for (let row = 0; row < rows; row++) {
-//       noStroke();
-
-//       if (grid[col][row] === AIR_INDEX) {
-//         fill("white");
-//       }
-//       else if (grid[col][row] === WATER_INDEX) {
-//         fill("blue");
-//       }
-//       else if (grid[col][row] === OBJECT_INDEX) {
-//         stroke(OBJECT_OUTLINE_COLOR);
-//         fill("grey");
-//       }
-
-//       square(row * CELL_SIZE, col * CELL_SIZE, CELL_SIZE);
-//     }
-//   }
-// }
-
-// function mouseDragged() {
-//   if (mouseButton.left) {
-//     let col = Math.floor(mouseY / CELL_SIZE);
-//     let row = Math.floor(mouseX / CELL_SIZE);
-
-//     createObject(col, row); 
-//   }
-// }
-
-// function createObject(col, row) {
-//   let lowestIndex = Math.floor(OBJECT_SIZE / -2);
-
-//   for (let tileY = lowestIndex; tileY < OBJECT_SIZE; tileY++) {
-//     for (let tileX = lowestIndex; tileX < OBJECT_SIZE; tileX++) {
-//       toggleCell(col + tileY, row + tileX, OBJECT_INDEX);
-//     }
-//   }
-  
-// }
-// function toggleCell(col, row, newIndex) {
-//   // edge checking
-//   if ((col >= 0 && col < columns) && (row >= 0 && row < rows)) {
-//     grid[col][row] = newIndex;
-//   }
-// }
+function toggleCell(col, row) {
+  // edge checking
+  if ((col >= 0 && col < columns) && (row >= 0 && row < rows)) {
+    if (grid[col][row] === BLANK_TILE) {
+      grid[col][row] = FILLED_TILE;
+    }
+    else if (grid[col][row] === FILLED_TILE) {
+      grid[col][row] = BLANK_TILE;
+    }
+  }
+}
