@@ -39,7 +39,7 @@
 const BLANK_TILE = 0;
 const FILLED_TILE = 1;
 
-const CELL_SIZE = 50;
+const CELL_SIZE = 20;
 
 let columns;
 let rows;
@@ -78,7 +78,31 @@ function draw() {
   visualizeGrid();
 }
 
-function updateGrid() {}
+let amplitudeX = 12;
+let amplitudeY = 4;
+let speedX = 1 / 40;
+let speedY = 1 / 20;
+
+let startingY;
+let startingX;
+let xPos = 0;
+let yPos = 0;
+
+function updateGrid() {
+  startingY = height / 2;
+  startingX = width / 2;
+
+  xPos += speedX;
+  yPos += speedY;
+  
+  let x = startingX + Math.cos(xPos) * height / CELL_SIZE * amplitudeX;
+  let y = startingY + Math.sin(yPos) * height / CELL_SIZE * amplitudeY;
+  let col = Math.floor(y / CELL_SIZE);
+  let row = Math.floor(x / CELL_SIZE);
+
+  toggleCell(col, row);
+  console.log(col, row, y);
+}
 function visualizeGrid() {
   for (let col = 0; col < columns; col++) {
     for (let row = 0; row < rows; row++) {
@@ -105,8 +129,8 @@ function toggleCell(col, row) {
     if (grid[col][row] === BLANK_TILE) {
       grid[col][row] = FILLED_TILE;
     }
-    else if (grid[col][row] === FILLED_TILE) {
-      grid[col][row] = BLANK_TILE;
-    }
+    // else if (grid[col][row] === FILLED_TILE) {
+    //   grid[col][row] = BLANK_TILE;
+    // }
   }
 }
