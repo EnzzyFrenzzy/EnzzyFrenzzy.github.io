@@ -1,45 +1,14 @@
-// Water-Simulation
+// String-Simulation
 // Milo Sadoway
 // 10-29-2026
 //
 // Extra for Experts:
 
-// https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Using_classes
-
-
-
-// class SoundString {
-//   #maxAmplitude;
-//   #maxSpeed;
-
-//   #stringStart;
-//   #stringEnd;
-
-//   #waveAmplitude;
-//   #wavePeriodSize;
-//   #waveSpeed;
-
-//   constructor(x1, y1, x2, y2) {
-//     this.#stringStart = [x1, y1];
-//     this.#stringEnd = [x2, y2];
-//   }
-
-//   something() {
-//     console.log(this.#stringStart);
-//   }
-// }
-
-// let newString = new SoundString(1, 2, 3, 4).something();
-
-//////////////////////////////
-
-// 2D rectangular Grid
-// and Edge-case checking
-
 const BLANK_TILE = 0;
 const FILLED_TILE = 1;
 
-const CELL_SIZE = 20;
+const ONE_RADIAN = Math.PI / 180;
+const CELL_SIZE = 10;
 
 let columns;
 let rows;
@@ -78,31 +47,77 @@ function draw() {
   visualizeGrid();
 }
 
-let amplitudeX = 12;
-let amplitudeY = 4;
-let speedX = 1 / 40;
-let speedY = 1 / 20;
+// INFINITY CONTROlS
+let amplitudeX = 4;
+let amplitudeY = 1;
+let speedX = 1 / 10;
+let speedY = 1 / 5;
 
-let startingY;
-let startingX;
 let xPos = 0;
 let yPos = 0;
 
-function updateGrid() {
+// WAVE CONTROLS
+let waveAmplitude = 1;
+let wavePeriodLength = ONE_RADIAN * 1/2;
+let waveSpeed = 1 / 30;
+
+let waveYPos = 0;
+
+// GENERAL
+let startingY;
+let startingX;
+
+function toggleCell(col, row) {
+  // edge checking
+  if ((col >= 0 && col < columns) && (row >= 0 && row < rows)) {
+    if (grid[col][row] === BLANK_TILE) {
+      grid[col][row] = FILLED_TILE;
+    }
+    // else if (grid[col][row] === FILLED_TILE) {
+    //   grid[col][row] = BLANK_TILE;
+    // }
+  }
+}
+function updateWaveRelatedInfo() {
   startingY = height / 2;
   startingX = width / 2;
 
   xPos += speedX;
   yPos += speedY;
-  
+
+  waveYPos += waveSpeed;
+}
+
+function drawInfinity() {
   let x = startingX + Math.cos(xPos) * height / CELL_SIZE * amplitudeX;
   let y = startingY + Math.sin(yPos) * height / CELL_SIZE * amplitudeY;
   let col = Math.floor(y / CELL_SIZE);
   let row = Math.floor(x / CELL_SIZE);
 
-  toggleCell(col, row);
-  console.log(col, row, y);
+  if (grid[col][row] === BLANK_TILE) {
+    toggleCell(col, row);
+  }
 }
+function drawWave() {
+  // for it to work nicely, make the grid empty first
+  grid = generateEmptyGrid(columns, rows);
+
+  for (let x = 0; x <= width; x++) {
+    let phaseShift = wavePeriodLength * x;
+    let y = startingY + Math.sin(waveYPos + phaseShift) * height / CELL_SIZE * waveAmplitude;
+
+    let col = Math.floor(y / CELL_SIZE);
+    let row = Math.floor(x / CELL_SIZE);
+    toggleCell(col, row);
+  }
+}
+function updateGrid() {
+  updateWaveRelatedInfo();
+  // drawInfinity();
+  drawWave();
+}
+
+
 function visualizeGrid() {
   for (let col = 0; col < columns; col++) {
     for (let row = 0; row < rows; row++) {
@@ -118,19 +133,3 @@ function visualizeGrid() {
   }
 }
 
-function keyPressed() {
-}
-function mousePressed() {
-}
-
-function toggleCell(col, row) {
-  // edge checking
-  if ((col >= 0 && col < columns) && (row >= 0 && row < rows)) {
-    if (grid[col][row] === BLANK_TILE) {
-      grid[col][row] = FILLED_TILE;
-    }
-    // else if (grid[col][row] === FILLED_TILE) {
-    //   grid[col][row] = BLANK_TILE;
-    // }
-  }
-}
