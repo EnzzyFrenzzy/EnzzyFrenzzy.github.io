@@ -18,6 +18,10 @@ async function setup() {
   createCanvas(windowWidth, windowHeight);
 
   calculateGrid();
+  // setInterval(function() {
+  //   wavePeriodLength = ONE_RADIAN * random(1/8, 2);
+  //   // waveAmplitude *= 0.9;
+  // }, 1000);
 }
 
 function calculateGrid() {
@@ -57,8 +61,8 @@ let xPos = 0;
 let yPos = 0;
 
 // WAVE CONTROLS
-let waveAmplitude = 1;
-let wavePeriodLength = ONE_RADIAN * 1/2;
+let waveAmplitude = 8;
+let wavePeriodLength = ONE_RADIAN * 2;
 let waveSpeed = 1 / 30;
 
 let waveYPos = 0;
@@ -103,17 +107,33 @@ function drawWave() {
   grid = generateEmptyGrid(columns, rows);
 
   for (let x = 0; x <= width; x++) {
-    let phaseShift = wavePeriodLength * x;
-    let y = startingY + Math.sin(waveYPos + phaseShift) * height / CELL_SIZE * waveAmplitude;
+    let waveInitial = Math.sin(waveYPos + wavePeriodLength * x);
+    let waveHeight = height / CELL_SIZE * waveAmplitude;
+    let waveNormal;
 
+    if (x < width/2) {
+      waveNormal = lerp(0, 1, x / width);
+    }
+    else {
+      waveNormal = lerp(1, 0, x / width);
+    }
+
+    let y = startingY + waveInitial * waveHeight * waveNormal;
     let col = Math.floor(y / CELL_SIZE);
     let row = Math.floor(x / CELL_SIZE);
+    
     toggleCell(col, row);
   }
+}
+function manipulateWaveViaMouse() {
+  wavePeriodLength = lerp(0, 1, mouseX / width) * ONE_RADIAN * CELL_SIZE / 4;
+  waveAmplitude = lerp(0, 1, mouseY / height) * CELL_SIZE;
 }
 function updateGrid() {
   updateWaveRelatedInfo();
   // drawInfinity();
+
+  manipulateWaveViaMouse();
   drawWave();
 }
 
@@ -122,7 +142,7 @@ function visualizeGrid() {
   for (let col = 0; col < columns; col++) {
     for (let row = 0; row < rows; row++) {
       if (grid[col][row] === BLANK_TILE) {
-        fill("white");
+        fill("grey");
       }
       else if (grid[col][row] === FILLED_TILE) {
         fill("black");
