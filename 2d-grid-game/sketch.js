@@ -8,7 +8,8 @@ const BLANK_TILE = 0;
 const FILLED_TILE = 1;
 
 const ONE_RADIAN = Math.PI / 180;
-const CELL_SIZE = 10;
+const WAVE_AMPLITUDE_BOUNDS = 12;
+const CELL_SIZE = 16;
 
 let columns;
 let rows;
@@ -62,8 +63,8 @@ let yPos = 0;
 
 // WAVE CONTROLS
 let waveAmplitude = 8;
-let wavePeriodLength = ONE_RADIAN * 2;
-let waveSpeed = 1 / 30;
+let wavePeriodLength = ONE_RADIAN * 1;
+let waveSpeed = 1 / 20;
 
 let waveYPos = 0;
 
@@ -90,6 +91,7 @@ function updateWaveRelatedInfo() {
   yPos += speedY;
 
   waveYPos += waveSpeed;
+  waveAmplitude = constrain(waveAmplitude -= 0.1, 0, WAVE_AMPLITUDE_BOUNDS);
 }
 
 function drawInfinity() {
@@ -125,19 +127,63 @@ function drawWave() {
     toggleCell(col, row);
   }
 }
+
 function manipulateWaveViaMouse() {
   wavePeriodLength = lerp(0, 1, mouseX / width) * ONE_RADIAN * CELL_SIZE / 4;
   waveAmplitude = lerp(0, 1, mouseY / height) * CELL_SIZE;
 }
-function updateGrid() {
-  updateWaveRelatedInfo();
-  // drawInfinity();
 
-  manipulateWaveViaMouse();
-  drawWave();
+let mouseOnWave = false;
+let applyingGraze = false;
+
+let goal = 0;
+let speed = 1;
+
+function updateMouseAfflictedGraze() {
+  if (mouseOnWave) {
+    applyingGraze = true;
+  }
+
+  console.log(applyingGraze);
+  if (waveAmplitude < goal && applyingGraze) {
+    if (applyingGraze) {
+      waveAmplitude += speed;
+    }
+  }
+  else {
+    applyingGraze = false;
+  }
+}
+function checkIfMouseGrazedWave() {
+  let yPos = Math.floor(mouseY / CELL_SIZE);
+
+  let midwayThroughHeight = Math.floor(height / CELL_SIZE / 2);
+  if (yPos === midwayThroughHeight) {
+    if (!mouseOnWave) {
+      mouseOnWave = true;
+      goal = Math.abs(movedY);
+
+      console.log("Boing");
+    }
+  }
+  else {
+    mouseOnWave = false;
+  }
 }
 
+function mouseMoved() {
+  checkIfMouseGrazedWave();
+}
 
+function updateGrid() {
+  updateWaveRelatedInfo();
+  updateMouseAfflictedGraze();
+
+  // manipulateWaveViaMouse();
+  // drawInfinity();
+
+  drawWave();
+}
 function visualizeGrid() {
   for (let col = 0; col < columns; col++) {
     for (let row = 0; row < rows; row++) {
@@ -152,4 +198,3 @@ function visualizeGrid() {
     }
   }
 }
-
