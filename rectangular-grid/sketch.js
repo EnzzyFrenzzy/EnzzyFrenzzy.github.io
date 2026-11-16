@@ -8,15 +8,15 @@ let rows;
 let grid;
 
 async function setup() {
-  createCanvas(windowWidth, windowHeight);
-
   calculateGrid();
 }
 
 function calculateGrid() {
-  columns = Math.floor(height / CELL_SIZE);
-  rows = Math.floor(width / CELL_SIZE);
+  columns = Math.floor(windowHeight * 0.9 / CELL_SIZE);
+  rows = Math.floor(windowWidth * 0.9 / CELL_SIZE);
 
+  let canvas = createCanvas(rows * CELL_SIZE, columns * CELL_SIZE);
+  canvas.parent("canvas-container");
   grid = generateGrid(columns, rows);
 }
 function generateGrid(columns, rows) {
@@ -81,17 +81,19 @@ function keyPressed() {
   }
 }
 function mousePressed() {
-  let col = Math.floor(mouseY / CELL_SIZE);
-  let row = Math.floor(mouseX / CELL_SIZE);
+  if ((mouseX >= 0 && mouseY >= 0) && (mouseX <= width && mouseY <= height)) {
+    let col = Math.floor(mouseY / CELL_SIZE);
+    let row = Math.floor(mouseX / CELL_SIZE);
 
-  // middle
-  toggleCell(col, row);
+    // middle
+    toggleCell(col, row);
 
-  // neighbors
-  toggleCell(col + 1, row);
-  toggleCell(col - 1, row);
-  toggleCell(col, row + 1);
-  toggleCell(col, row - 1);
+    // neighbors
+    toggleCell(col + 1, row);
+    toggleCell(col - 1, row);
+    toggleCell(col, row + 1);
+    toggleCell(col, row - 1);
+  }
 }
 
 function toggleCell(col, row) {
