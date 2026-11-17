@@ -64,8 +64,9 @@ let yPos = 0;
 // WAVE CONTROLS
 let waveAmplitude = 8;
 let wavePeriodLength = ONE_RADIAN * 1;
-let waveSpeed = 1 / 20;
+let waveSpeed = 1 / 2;
 
+let waveYDiminish = 1 / 10;
 let waveYPos = 0;
 
 // GENERAL
@@ -91,7 +92,7 @@ function updateWaveRelatedInfo() {
   yPos += speedY;
 
   waveYPos += waveSpeed;
-  waveAmplitude = constrain(waveAmplitude -= 0.1, 0, WAVE_AMPLITUDE_BOUNDS);
+  waveAmplitude = constrain(waveAmplitude -= waveYDiminish, 0, CELL_SIZE);
 }
 
 function drawInfinity() {
@@ -128,42 +129,25 @@ function drawWave() {
   }
 }
 
-function manipulateWaveViaMouse() {
+function manipulateWaveViaMousePosition() {
   wavePeriodLength = lerp(0, 1, mouseX / width) * ONE_RADIAN * CELL_SIZE / 4;
   waveAmplitude = lerp(0, 1, mouseY / height) * CELL_SIZE;
 }
 
 let mouseOnWave = false;
-let applyingGraze = false;
 
-let goal = 0;
-let speed = 1;
+function manipulateWaveViaMouseFlick() {
+  let midway = Math.floor(height / 2 / CELL_SIZE);
 
-function updateMouseAfflictedGraze() {
-  if (mouseOnWave) {
-    applyingGraze = true;
-  }
+  let previousPos = Math.floor(pmouseY / CELL_SIZE);
+  let currentPos = Math.floor(mouseY / CELL_SIZE);
 
-  console.log(applyingGraze);
-  if (waveAmplitude < goal && applyingGraze) {
-    if (applyingGraze) {
-      waveAmplitude += speed;
-    }
-  }
-  else {
-    applyingGraze = false;
-  }
-}
-function checkIfMouseGrazedWave() {
-  let yPos = Math.floor(mouseY / CELL_SIZE);
-
-  let midwayThroughHeight = Math.floor(height / CELL_SIZE / 2);
-  if (yPos === midwayThroughHeight) {
+  if ((currentPos >= midway && previousPos <= midway) || (currentPos <= midway && previousPos >= midway)) {
     if (!mouseOnWave) {
       mouseOnWave = true;
-      goal = Math.abs(movedY);
 
-      console.log("Boing");
+      waveAmplitude = Math.abs(movedY);
+      wavePeriodLength = ONE_RADIAN * Math.abs(movedX / CELL_SIZE);
     }
   }
   else {
@@ -172,14 +156,13 @@ function checkIfMouseGrazedWave() {
 }
 
 function mouseMoved() {
-  checkIfMouseGrazedWave();
+  manipulateWaveViaMouseFlick();
 }
 
 function updateGrid() {
   updateWaveRelatedInfo();
-  updateMouseAfflictedGraze();
 
-  // manipulateWaveViaMouse();
+  // manipulateWaveViaMousePosition();
   // drawInfinity();
 
   drawWave();
