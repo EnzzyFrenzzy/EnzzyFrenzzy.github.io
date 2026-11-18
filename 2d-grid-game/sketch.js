@@ -64,7 +64,7 @@ let yPos = 0;
 // WAVE CONTROLS
 let waveAmplitude = 8;
 let wavePeriodLength = ONE_RADIAN * 1;
-let waveSpeed = 1 / 2;
+let waveSpeed = 1 / 4;
 
 let waveYDiminish = 1 / 10;
 let waveYPos = 0;
@@ -147,7 +147,7 @@ function manipulateWaveViaMouseFlick() {
       mouseOnWave = true;
 
       waveAmplitude = Math.abs(movedY);
-      wavePeriodLength = ONE_RADIAN * Math.abs(movedX / CELL_SIZE);
+      // wavePeriodLength = Math.abs(movedX / CELL_SIZE);
     }
   }
   else {
