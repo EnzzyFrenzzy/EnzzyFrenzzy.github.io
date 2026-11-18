@@ -4,12 +4,44 @@
 //
 // Extra for Experts:
 
-const BLANK_TILE = 0;
 const FILLED_TILE = 1;
 
+const BLANK_TILE = 0;
+const SPAWN_STRING_TILE = 1;
+const A_STRING_TILE = 2;
+const B_STRING_TILE = 3;
+const C_STRING_TILE = 4;
+const D_STRING_TILE = 5;
+const E_STRING_TILE = 6;
+const F_STRING_TILE = 7;
+const G_STRING_TILE = 8;
+
 const ONE_RADIAN = Math.PI / 180;
-const WAVE_AMPLITUDE_BOUNDS = 12;
 const CELL_SIZE = 16;
+
+class String {
+  #stringOrigin;
+  #stringGoal;
+  #stringType;
+
+  // #stringDistanceX = 0;
+  // #stringDistanceY = 0;
+
+  // #currentAmplitude = 0;
+  // #currentPosition = 0;
+
+  constructor(originX, originY, goalX, goalY, stringType) {
+    this.#stringOrigin = {x: Math.floor(originX / CELL_SIZE), y: Math.floor(originY / CELL_SIZE)};
+    this.#stringGoal = {x: Math.floor(goalX / CELL_SIZE), y: Math.floor(goalY / CELL_SIZE)};
+    this.#stringType = stringType;
+
+    // let newDistanceX = 
+  }
+
+  test() {
+    console.log(this.#stringOrigin, this.#stringGoal, this.#stringType);
+  }
+}
 
 let columns;
 let rows;
@@ -19,10 +51,8 @@ async function setup() {
   createCanvas(windowWidth, windowHeight);
 
   calculateGrid();
-  // setInterval(function() {
-  //   wavePeriodLength = ONE_RADIAN * random(1/8, 2);
-  //   // waveAmplitude *= 0.9;
-  // }, 1000);
+  let newString = new String(random(height), random(height), random(height), random(height), C_STRING_TILE);
+  newString.test();
 }
 
 function calculateGrid() {
