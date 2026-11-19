@@ -17,6 +17,7 @@ const F_STRING_TILE = 7;
 const G_STRING_TILE = 8;
 
 const ONE_RADIAN = Math.PI / 180;
+const STRING_SIZE_MIN = 4;
 const CELL_SIZE = 16;
 
 class String {
@@ -24,22 +25,10 @@ class String {
   #stringGoal;
   #stringType;
 
-  // #stringDistanceX = 0;
-  // #stringDistanceY = 0;
-
-  // #currentAmplitude = 0;
-  // #currentPosition = 0;
-
   constructor(originX, originY, goalX, goalY, stringType) {
     this.#stringOrigin = {x: Math.floor(originX / CELL_SIZE), y: Math.floor(originY / CELL_SIZE)};
     this.#stringGoal = {x: Math.floor(goalX / CELL_SIZE), y: Math.floor(goalY / CELL_SIZE)};
     this.#stringType = stringType;
-
-    // let newDistanceX = 
-  }
-
-  test() {
-    console.log(this.#stringOrigin, this.#stringGoal, this.#stringType);
   }
 }
 
@@ -47,12 +36,43 @@ let columns;
 let rows;
 let grid;
 
+let creatingWave = false;
+let lastWaveOrigin = {x: 0, y: 0};
+let lastWaveGoal = {x: 0, y: 0};
+
+function mousePressed() {
+  if (!creatingWave) {
+    let newX = Math.floor(mouseX / CELL_SIZE);
+    let newY = Math.floor(mouseY / CELL_SIZE);
+
+    creatingWave = true;
+    lastWaveOrigin = {x: newX, y: newY};
+  }
+  else {
+    let newX = Math.floor(mouseX / CELL_SIZE);
+    let newY = Math.floor(mouseY / CELL_SIZE);
+    
+    let distanceX = Math.floor(Math.abs(lastWaveOrigin.x - newX));
+    let distanceY = Math.floor(Math.abs(lastWaveOrigin.y - newY));
+    
+    console.log(distanceX, distanceY);
+    if ((distanceX >= STRING_SIZE_MIN) || (distanceY >= STRING_SIZE_MIN)) {
+      creatingWave = false;
+      lastWaveGoal = {x: newX, y: newY};
+
+      console.log("Created");
+      toggleCell(lastWaveOrigin.x, lastWaveOrigin.y);
+      toggleCell(lastWaveGoal.x, lastWaveGoal.y);
+    }
+  }
+
+  console.log(lastWaveOrigin, lastWaveGoal);
+}
+
 async function setup() {
   createCanvas(windowWidth, windowHeight);
 
   calculateGrid();
-  let newString = new String(random(height), random(height), random(height), random(height), C_STRING_TILE);
-  newString.test();
 }
 
 function calculateGrid() {
@@ -82,15 +102,6 @@ function draw() {
   visualizeGrid();
 }
 
-// INFINITY CONTROlS
-let amplitudeX = 4;
-let amplitudeY = 1;
-let speedX = 1 / 10;
-let speedY = 1 / 5;
-
-let xPos = 0;
-let yPos = 0;
-
 // WAVE CONTROLS
 let waveAmplitude = 8;
 let wavePeriodLength = ONE_RADIAN * 1;
@@ -118,22 +129,8 @@ function updateWaveRelatedInfo() {
   startingY = height / 2;
   startingX = width / 2;
 
-  xPos += speedX;
-  yPos += speedY;
-
   waveYPos += waveSpeed;
   waveAmplitude = constrain(waveAmplitude -= waveYDiminish, 0, CELL_SIZE);
-}
-
-function drawInfinity() {
-  let x = startingX + Math.cos(xPos) * height / CELL_SIZE * amplitudeX;
-  let y = startingY + Math.sin(yPos) * height / CELL_SIZE * amplitudeY;
-  let col = Math.floor(y / CELL_SIZE);
-  let row = Math.floor(x / CELL_SIZE);
-
-  if (grid[col][row] === BLANK_TILE) {
-    toggleCell(col, row);
-  }
 }
 function drawWave() {
   // for it to work nicely, make the grid empty first
@@ -191,10 +188,6 @@ function mouseMoved() {
 
 function updateGrid() {
   updateWaveRelatedInfo();
-
-  // manipulateWaveViaMousePosition();
-  // drawInfinity();
-
   drawWave();
 }
 function visualizeGrid() {
