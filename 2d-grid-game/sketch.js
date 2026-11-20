@@ -55,18 +55,30 @@ function mousePressed() {
     let distanceX = Math.floor(Math.abs(lastWaveOrigin.x - newX));
     let distanceY = Math.floor(Math.abs(lastWaveOrigin.y - newY));
     
-    console.log(distanceX, distanceY);
     if ((distanceX >= STRING_SIZE_MIN) || (distanceY >= STRING_SIZE_MIN)) {
       creatingWave = false;
       lastWaveGoal = {x: newX, y: newY};
 
-      console.log("Created");
-      toggleCell(lastWaveOrigin.x, lastWaveOrigin.y);
-      toggleCell(lastWaveGoal.x, lastWaveGoal.y);
+      // TESTING
+      for (let posAlpha = 0; posAlpha <= 1; posAlpha += ((1 / distanceX) + (1 / distanceY)) / CELL_SIZE) {
+        let posY = Math.floor(lerp(lastWaveOrigin.y, lastWaveGoal.y, posAlpha));
+        let posX = Math.floor(lerp(lastWaveOrigin.x, lastWaveGoal.x, posAlpha));
+
+        toggleCell(posY, posX);
+      }
+
+      // for (let alphaX = 0; alphaX <= 1; alphaX += (1 / distanceX / CELL_SIZE)) {
+      //   let posY = Math.floor(lerp(lastWaveOrigin.y, lastWaveGoal.y, alphaX));
+      //   let posX = Math.floor(lerp(lastWaveOrigin.x, lastWaveGoal.x, alphaX));
+
+      //   toggleCell(posY, posX);
+      // }
+
+      // console.log("Created");
+      // toggleCell(lastWaveOrigin.y, lastWaveOrigin.x);
+      // toggleCell(lastWaveGoal.y, lastWaveGoal.x);
     }
   }
-
-  console.log(lastWaveOrigin, lastWaveGoal);
 }
 
 async function setup() {
@@ -188,7 +200,7 @@ function mouseMoved() {
 
 function updateGrid() {
   updateWaveRelatedInfo();
-  drawWave();
+  // drawWave();
 }
 function visualizeGrid() {
   for (let col = 0; col < columns; col++) {
