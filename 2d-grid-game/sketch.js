@@ -9,17 +9,23 @@
 // https://stackoverflow.com/questions/46700368/angled-direction-sine-wave
 //
 // Extra for Experts:
+// - I used some sounds
+// - started using OOP in this  project
+// - Used some object functions like .values() and .keys()
 
+// minor calculation additionals and whatnot
 const STRING_CREATION_ADDITIONAL = 1;
 const HIT_STRENGTH_MULTIPLIER = 2;
-const MIN_STRING_HIT_STRENGTH = 2;
+const MIN_STRING_HIT_STRENGTH = 1;
 const STRING_DETECTION_SIZE = 1;
 
+// Main calculation stuff
 const FULL_CIRCLE_IN_RADIANS = (2 * Math.PI);
 const ONE_RADIAN = (Math.PI / 180);
 const STRING_SIZE_MIN = 12;
 const CELL_SIZE = 16;
 
+// the main data constants used throughout the whole script.
 const TILE_STROKE_COLOUR = "Grey";
 const STRING_CONSTANTS = {
   // only for displaying via text during string selection
@@ -74,11 +80,13 @@ const STRING_DIMINISH_SPEED = 0.02;
 const MAX_STRING_AMPLITUDE = Math.floor(CELL_SIZE * 0.9);
 const MIN_STRING_AMPLITUDE = 0;
 
+// The text options that are used for string selection
 const SElECTION_STROKE_COLOUR = "Black";
 const SELECTION_ON_SCREEN_TIME = 2000;
 const SELECTION_STROKE_SIZE = 8;
 const SELECTION_TEXT_SIZE = 60;
 
+// the text options used for instructions
 const INSTRUCTIONS = {
   HIDDEN: [
     "View the instructions with 'I'.",
@@ -97,10 +105,35 @@ const INSTRUCTION_STROKE_SIZE = 6;
 const INSTRUCTION_TEXT_SIZE = 26;
 const INSTRUCTION_SPACING = 44;
 
+let lastWaveOrigin = { x: 0, y: 0 };
+let lastWaveGoal = { x: 0, y: 0 };
+let creatingWave = false;
+
+let selectedStringType = STRING_CONSTANTS.TYPES.A_STRING;
+let stringSelectionIndex = 0;
+let lastSelectionTime = 0;
+
+let instructionsAreVisible = true;
+
+let strings = [];
+let columns;
+let rows;
+let grid;
+
+// all of the string sounds to be used
+let stringSoundA;
+let stringSoundB;
+let stringSoundC;
+let stringSoundD;
+let stringSoundE;
+let stringSoundF;
+let stringSoundG;
+
 class String {
   #stringOrigin;
   #stringGoal;
   #stringType;
+  #stringSound;
 
   #ownedTiles;
   #touchingOwnedTiles = false;
@@ -109,6 +142,9 @@ class String {
   #totalDisplacementY;
 
   #waveData;
+
+  // sets the #waveData to become a blank template provided by the
+  // STRING_CONSTANTS listed above.
   #finalizeWaveData() {
     let stringType = this.#stringType;
 
@@ -135,6 +171,41 @@ class String {
     }
   }
 
+  // Checks the stringType, and plays the corresponding string sound
+  #finalizeStringSound() {
+    let stringType = this.#stringType;
+    let selectedStringSound;
+
+    if (stringType === STRING_CONSTANTS.TYPES.A_STRING) {
+      selectedStringSound = stringSoundA;
+    }
+    else if (stringType === STRING_CONSTANTS.TYPES.B_STRING) {
+      selectedStringSound = stringSoundB;
+    }
+    else if (stringType === STRING_CONSTANTS.TYPES.C_STRING) {
+      selectedStringSound = stringSoundC;
+    }
+    else if (stringType === STRING_CONSTANTS.TYPES.D_STRING) {
+      selectedStringSound = stringSoundD;
+    }
+    else if (stringType === STRING_CONSTANTS.TYPES.E_STRING) {
+      selectedStringSound = stringSoundE;
+    }
+    else if (stringType === STRING_CONSTANTS.TYPES.F_STRING) {
+      selectedStringSound = stringSoundF;
+    }
+    else if (stringType === STRING_CONSTANTS.TYPES.G_STRING) {
+      selectedStringSound = stringSoundG;
+    }
+
+    this.#stringSound = selectedStringSound;
+  }
+
+  // what is needed on string construction:
+  // Origin point -> X and Y
+  // Goal point -> X and Y
+  // The type of string it will be
+  // The owned tiles (the midline)
   constructor(originX, originY, goalX, goalY, stringType, ownedTiles) {
     this.#stringOrigin = { x: originX, y: originY };
     this.#stringGoal = { x: goalX, y: goalY };
@@ -148,10 +219,12 @@ class String {
     this.#totalDisplacementX = displacementX;
     this.#totalDisplacementY = displacementY;
 
-    this.#finalizeWaveData()
+    this.#finalizeStringSound();
+    this.#finalizeWaveData();
     strings.push(this);
   }
 
+  // Used for detection on when the mouse has hit any strings midline
   onMouseHitOwnedTiles(previousX, previousY, currentX, currentY, hitStrength) {
     let stringOrigin = this.#stringOrigin;
     let stringGoal = this.#stringGoal;
@@ -179,25 +252,34 @@ class String {
     let mouseSuccessfullyHitString = (!this.#touchingOwnedTiles && hasTouchedTile);
     if (mouseSuccessfullyHitString) {
       if (hitStrength > this.#waveData.amplitude) {
+        // since the sound is slightly delayed, lets make it play first, and hopefully
+        // the user wont care too much.
+        this.#stringSound.play();
+
         let newAmplitude = constrain((this.#waveData.amplitude + hitStrength), MIN_STRING_AMPLITUDE, MAX_STRING_AMPLITUDE);
         this.#waveData.amplitude = newAmplitude;
+
       }
     }
 
     this.#touchingOwnedTiles = hasTouchedTile;
   }
 
-  // I used some public sites to help me calculate the sine wave (listed below):
-  //
-  // - Video Demo: https://www.youtube.com/watch?v=uqlz015kjV4&t=207s -> (Reference video of how I 
-  //   wanted the graph to behave)
-  //
-  // - Desmos Graph: https://www.desmos.com/calculator/m77fpdxscn -> (Used
-  //   to understand how to get the perpendicular angles of the line)
-  //
-  // - Example: https://stackoverflow.com/questions/46700368/angled-direction-sine-wave -> (A public
-  //   explanation of how to solve the problem)
+  // Updates the string's owned tiles to create a sine wave. Then, applies
+  // that wave onto the grid. *This should be called per frame on the draw function
+  // at all times.*
   updateAndDrawWave() {
+    // I used some public sites to help me calculate the sine wave (listed below):
+    //
+    // - Video Demo: https://www.youtube.com/watch?v=uqlz015kjV4&t=207s -> (Reference video of how I 
+    //   wanted the graph to behave)
+    //
+    // - Desmos Graph: https://www.desmos.com/calculator/m77fpdxscn -> (Used
+    //   to understand how to get the perpendicular angles of the line)
+    //
+    // - Example: https://stackoverflow.com/questions/46700368/angled-direction-sine-wave -> (A public
+    //   explanation of how to solve the problem)
+
     let stringOrigin = this.#stringOrigin;
     let displacementX = this.#totalDisplacementX;
     let displacementY = this.#totalDisplacementY;
@@ -236,7 +318,7 @@ class String {
         finalY = Math.round(tile.y + perpendicularToSlopeY * positionOnWave);
       }
 
-      let tileType = this.#stringType
+      let tileType = this.#stringType;
       toggleTile(finalY, finalX, tileType);
     }
 
@@ -245,32 +327,33 @@ class String {
   }
 }
 
-let lastWaveOrigin = { x: 0, y: 0 };
-let lastWaveGoal = { x: 0, y: 0 };
-let creatingWave = false;
-
-let selectedStringType = STRING_CONSTANTS.TYPES.A_STRING;
-let stringSelectionIndex = 0;
-let lastSelectionTime = 0;
-
-let instructionsAreVisible = true;
-
-let strings = [];
-let columns;
-let rows;
-let grid;
-
+// main things on initialization
 async function setup() {
+  loadAllStringSounds();
+
   createCanvas(windowWidth, windowHeight);
   calculateGrid();
 }
 
+async function loadAllStringSounds() {
+  stringSoundA = await loadSound("sounds/A_String.mp3");
+  stringSoundB = await loadSound("sounds/B_String.mp3");
+  stringSoundC = await loadSound("sounds/C_String.mp3");
+  stringSoundD = await loadSound("sounds/D_String.mp3");
+  stringSoundE = await loadSound("sounds/E_String.mp3");
+  stringSoundF = await loadSound("sounds/F_String.mp3");
+  stringSoundG = await loadSound("sounds/G_String.mp3");
+}
+
+// creates all of the total columns and rows the grid will have, then creates
+// an empty grid
 function calculateGrid() {
   columns = Math.floor(height / CELL_SIZE);
   rows = Math.floor(width / CELL_SIZE);
 
   grid = generateEmptyGrid(columns, rows);
 }
+// Sets all tiles on the grid to be the blank tile type
 function generateEmptyGrid(columns, rows) {
   let newGrid = [];
 
@@ -285,16 +368,19 @@ function generateEmptyGrid(columns, rows) {
   return newGrid;
 }
 
+// main things per frame
 function draw() {
   background(220);
 
   updateGrid();
   visualizeGrid();
 
+  // keep these after visualizing the grid, so they show on top.
   visualizeStringSelection();
   visualizeInstructions();
 }
 
+// change the tile at grid[col][row] to the tileType.
 function toggleTile(col, row, tileType = BLANK_TILE_TYPE) {
   // edge checking
   if ((col >= 0 && col < columns) && (row >= 0 && row < rows)) {
@@ -302,6 +388,7 @@ function toggleTile(col, row, tileType = BLANK_TILE_TYPE) {
   }
 }
 
+// Updates the grid by having all strings draw their waves onto it.
 function updateGrid() {
   grid = generateEmptyGrid(columns, rows);
 
@@ -309,6 +396,7 @@ function updateGrid() {
     string.updateAndDrawWave();
   }
 }
+// changes the grid by drawing certain colours when a tile value is changed.
 function visualizeGrid() {
   for (let col = 0; col < columns; col++) {
     for (let row = 0; row < rows; row++) {
@@ -343,6 +431,7 @@ function visualizeGrid() {
   }
 }
 
+// the text that is shown to visualize which string is currently selected to spawn in.
 function visualizeStringSelection() {
   if (lastSelectionTime >= millis()) {
     push();
@@ -364,6 +453,7 @@ function visualizeStringSelection() {
     pop();
   }
 }
+// the instructions visualized in text for the user
 function visualizeInstructions() {
   push();
 
@@ -400,6 +490,7 @@ function visualizeInstructions() {
   pop();
 }
 
+// how each string is created
 function mousePressed() {
   if (!creatingWave) {
     let newX = Math.floor(mouseX / CELL_SIZE);
@@ -435,12 +526,15 @@ function mousePressed() {
     }
   }
 }
+// how each string is interacted with
 function mouseMoved() {
   let previousX = Math.floor(pmouseX / CELL_SIZE);
   let previousY = Math.floor(pmouseY / CELL_SIZE);
   let currentX = Math.floor(mouseX / CELL_SIZE);
   let currentY = Math.floor(mouseY / CELL_SIZE);
 
+  // Cant be negative, since that will flip the sine wave of the string
+  // it may effect
   let distanceX = Math.abs(currentX - previousX);
   let distanceY = Math.abs(currentY - previousY);
   let hypotenuseOfDistance = Math.hypot(distanceX, distanceY);
@@ -452,6 +546,7 @@ function mouseMoved() {
     }
   }
 }
+// how the string selected type is changed
 function mouseWheel(event) {
   // the mouse wheel delta should be flipped, it feels nicer
   if (event.delta > 0) {
@@ -461,8 +556,9 @@ function mouseWheel(event) {
     stringSelectionIndex++;
   }
 
-  // This is just like getting the length of an array, but in an object instead. Used the site below:
-  //
+  // Since this is an object and not an array, we have to use
+  // different methods of getting the key, and value of each within
+  // the table. Used the site below to help figure out how:
   // https://www.w3schools.com/jsref/jsref_object_values.asp
   let totalNumberOfStringTypes = (Object.keys(STRING_CONSTANTS.TYPES).length - 1);
   let stringTypes = Object.values(STRING_CONSTANTS.TYPES);
@@ -471,6 +567,7 @@ function mouseWheel(event) {
   selectedStringType = stringTypes[stringSelectionIndex];
   lastSelectionTime = millis() + SELECTION_ON_SCREEN_TIME;
 }
+// how to hide and unhide instructions
 function keyPressed() {
   if (key === "i") {
     instructionsAreVisible = !instructionsAreVisible;
