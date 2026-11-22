@@ -20,15 +20,27 @@ const ONE_RADIAN = (Math.PI / 180);
 const STRING_SIZE_MIN = 12;
 const CELL_SIZE = 16;
 
+const TILE_STROKE_COLOUR = "Grey";
 const STRING_CONSTANTS = {
+  // only for displaying via text during string selection
+  NAMES: {
+    A_STRING: "A",
+    B_STRING: "B",
+    C_STRING: "C",
+    D_STRING: "D",
+    E_STRING: "E",
+    F_STRING: "F",
+    G_STRING: "G",
+  },
+
   TYPES: {
-    A_STRING: 1,
-    B_STRING: 2,
-    C_STRING: 3,
-    D_STRING: 4,
-    E_STRING: 5,
-    F_STRING: 6,
-    G_STRING: 7,
+    A_STRING: 0,
+    B_STRING: 1,
+    C_STRING: 2,
+    D_STRING: 3,
+    E_STRING: 4,
+    F_STRING: 5,
+    G_STRING: 6,
   },
   COLOURS: {
     A_STRING: "Red",
@@ -56,11 +68,34 @@ const STRING_CONSTANTS = {
 // Seperate these from the STRING_CONSTANTS so that other code can access
 // the constants more easily, without needing to deal with these
 const BLANK_TILE_COLOUR = "Silver";
-const BLANK_TILE_TYPE = 0;
+const BLANK_TILE_TYPE = -1;
 
-const STRING_DIMINISH_SPEED = 0.025;
+const STRING_DIMINISH_SPEED = 0.02;
 const MAX_STRING_AMPLITUDE = Math.floor(CELL_SIZE * 0.9);
 const MIN_STRING_AMPLITUDE = 0;
+
+const SElECTION_STROKE_COLOUR = "Black";
+const SELECTION_ON_SCREEN_TIME = 2000;
+const SELECTION_STROKE_SIZE = 8;
+const SELECTION_TEXT_SIZE = 60;
+
+const INSTRUCTIONS = {
+  HIDDEN: [
+    "View the instructions with 'I'.",
+  ],
+  VISIBLE: [
+    `CLICK two points on the grid to spawn a string. (AT LEAST ${STRING_SIZE_MIN} tiles long)`,
+    "Do controlled FLICK's with your MOUSE to interact. (Not fast nor slow)",
+    "Change the selected string with MOUSE-SCROLL.",
+    "Close the instructions with ' I '.",
+  ],
+};
+const INSTRUCTION_STROKE_COLOUR = "Black";
+const INSTRUCTION_TEXT_COLOUR = "Beige";
+const INSTRUCTION_FONT = 'Verdana';
+const INSTRUCTION_STROKE_SIZE = 6;
+const INSTRUCTION_TEXT_SIZE = 26;
+const INSTRUCTION_SPACING = 44;
 
 class String {
   #stringOrigin;
@@ -196,6 +231,7 @@ class String {
         let endClamps = Math.sin((Math.PI * pointOnWave) / displacementSlope);
         let positionOnWave = ((Math.sin(phaseShift) * amplitude) * endClamps);
 
+        // using Math.floor would make lighter waves look stiff. Rounding is better.
         finalX = Math.round(tile.x + perpendicularToSlopeX * positionOnWave);
         finalY = Math.round(tile.y + perpendicularToSlopeY * positionOnWave);
       }
@@ -213,8 +249,11 @@ let lastWaveOrigin = { x: 0, y: 0 };
 let lastWaveGoal = { x: 0, y: 0 };
 let creatingWave = false;
 
-let currentStringSelection = STRING_CONSTANTS.TYPES.A_STRING;
+let selectedStringType = STRING_CONSTANTS.TYPES.A_STRING;
 let stringSelectionIndex = 0;
+let lastSelectionTime = 0;
+
+let instructionsAreVisible = true;
 
 let strings = [];
 let columns;
@@ -251,6 +290,9 @@ function draw() {
 
   updateGrid();
   visualizeGrid();
+
+  visualizeStringSelection();
+  visualizeInstructions();
 }
 
 function toggleTile(col, row, tileType = BLANK_TILE_TYPE) {
@@ -295,9 +337,67 @@ function visualizeGrid() {
         fill(STRING_CONSTANTS.COLOURS.G_STRING);
       }
 
+      stroke(TILE_STROKE_COLOUR);
       square(row * CELL_SIZE, col * CELL_SIZE, CELL_SIZE);
     }
   }
+}
+
+function visualizeStringSelection() {
+  if (lastSelectionTime >= millis()) {
+    push();
+
+    let stringName = Object.keys(STRING_CONSTANTS.TYPES)[selectedStringType];
+    let providedColour = STRING_CONSTANTS.COLOURS[stringName];
+    let providedText = (STRING_CONSTANTS.NAMES[stringName]);
+
+    fill(providedColour);
+    textSize(SELECTION_TEXT_SIZE);
+    stroke(SElECTION_STROKE_COLOUR);
+    strokeWeight(SELECTION_STROKE_SIZE);
+
+    // The positionY is halved to keep the gaps on both sides more even.
+    let positionY = (windowHeight - SELECTION_TEXT_SIZE / 2);
+    let positionX = (windowWidth - SELECTION_TEXT_SIZE);
+    text(providedText, positionX, positionY);
+
+    pop();
+  }
+}
+function visualizeInstructions() {
+  push();
+
+  textFont(INSTRUCTION_FONT);
+  fill(INSTRUCTION_TEXT_COLOUR);
+  textSize(INSTRUCTION_TEXT_SIZE);
+  stroke(INSTRUCTION_STROKE_COLOUR);
+  strokeWeight(INSTRUCTION_STROKE_SIZE);
+
+  let spacingMultiplier = 1;
+  if (instructionsAreVisible) {
+    for (let instructionText of INSTRUCTIONS.VISIBLE) {
+      // The spacing needs to change per frame for the Y, however the gap
+      // on the left looks weird, so change it to make it look less weird.
+      let spacingOffsetX = (INSTRUCTION_SPACING / 2);
+      let spacingOffsetY = (INSTRUCTION_SPACING * spacingMultiplier);
+
+      text(instructionText, spacingOffsetX, spacingOffsetY);
+      spacingMultiplier++;
+    }
+  }
+  else {
+    for (let instructionText of INSTRUCTIONS.HIDDEN) {
+      // The spacing needs to change per frame for the Y, however the gap
+      // on the left looks weird, so change it to make it look less weird.
+      let spacingOffsetX = (INSTRUCTION_SPACING / 2);
+      let spacingOffsetY = (INSTRUCTION_SPACING * spacingMultiplier);
+
+      text(instructionText, spacingOffsetX, spacingOffsetY);
+      spacingMultiplier++;
+    }
+  }
+
+  pop();
 }
 
 function mousePressed() {
@@ -331,7 +431,7 @@ function mousePressed() {
         ownedTiles.push(newOwnedTile);
       }
 
-      new String(lastWaveOrigin.x, lastWaveOrigin.y, lastWaveGoal.x, lastWaveGoal.y, currentStringSelection, ownedTiles);
+      new String(lastWaveOrigin.x, lastWaveOrigin.y, lastWaveGoal.x, lastWaveGoal.y, selectedStringType, ownedTiles);
     }
   }
 }
@@ -368,5 +468,11 @@ function mouseWheel(event) {
   let stringTypes = Object.values(STRING_CONSTANTS.TYPES);
 
   stringSelectionIndex = constrain(stringSelectionIndex, 0, totalNumberOfStringTypes);
-  currentStringSelection = stringTypes[stringSelectionIndex];
+  selectedStringType = stringTypes[stringSelectionIndex];
+  lastSelectionTime = millis() + SELECTION_ON_SCREEN_TIME;
+}
+function keyPressed() {
+  if (key === "i") {
+    instructionsAreVisible = !instructionsAreVisible;
+  }
 }
