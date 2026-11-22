@@ -4,30 +4,35 @@
 //
 // Extra for Experts:
 
-const BLANK_TILE_TYPE = 0;
-const CREATION_TILE_TYPE = 1;
-const A_STRING_TILE_TYPE = 2;
-const B_STRING_TILE_TYPE = 3;
-const C_STRING_TILE_TYPE = 4;
-const D_STRING_TILE_TYPE = 5;
-const E_STRING_TILE_TYPE = 6;
-const F_STRING_TILE_TYPE = 7;
-const G_STRING_TILE_TYPE = 8;
-
-const BLANK_TILE_COLOUR = "Silver";
-const CREATION_TILE_COLOUR = "Grey";
-const A_STRING_TILE_COLOUR = "Red";
-const B_STRING_TILE_COLOUR = "Orange";
-const C_STRING_TILE_COLOUR = "Yellow";
-const D_STRING_TILE_COLOUR = "Green";
-const E_STRING_TILE_COLOUR = "Blue";
-const F_STRING_TILE_COLOUR = "Purple";
-const G_STRING_TILE_COLOUR = "Violet";
+const STRING_CONSTANTS = {
+  TYPES: {
+    BLANK: 0,
+    A_STRING: 1,
+    B_STRING: 2,
+    C_STRING: 3,
+    D_STRING: 4,
+    E_STRING: 5,
+    F_STRING: 6,
+    G_STRING: 7,
+  },
+  COLOURS: {
+    BLANK: "Silver",
+    A_STRING: "Red",
+    B_STRING: "Orange",
+    C_STRING: "Yellow",
+    D_STRING: "Green",
+    E_STRING: "Blue",
+    F_STRING: "Purple",
+    G_STRING: "Violet",
+  },
+  WAVE_DATA: {},
+};
 
 const STRING_CREATION_ADDITIONAL = 1;
 const MIN_STRING_HIT_STRENGTH = 1;
 const STRING_DETECTION_SIZE = 1;
 
+const FULL_CIRCLE_IN_RADIANS = 2 * Math.PI;
 const ONE_RADIAN = Math.PI / 180;
 const STRING_SIZE_MIN = 12;
 const CELL_SIZE = 16;
@@ -40,11 +45,26 @@ class String {
   #ownedTiles;
   #touchingOwnedTiles = false;
 
+  #totalDisplacementX;
+  #totalDisplacementY;
+  #waveData = {
+    amplitude: 6,
+    periodLength: 25,
+    speed: 0.25,
+  };
+
   constructor(originX, originY, goalX, goalY, stringType, ownedTiles) {
     this.#stringOrigin = { x: originX, y: originY };
     this.#stringGoal = { x: goalX, y: goalY };
     this.#stringType = stringType;
     this.#ownedTiles = ownedTiles;
+
+    // Although these numbers should already be intergers, lets floor
+    // them again just in case
+    let displacementX = Math.floor(this.#stringGoal.x - this.#stringOrigin.x);
+    let displacementY = Math.floor(this.#stringGoal.y - this.#stringOrigin.y);
+    this.#totalDisplacementX = displacementX;
+    this.#totalDisplacementY = displacementY;
 
     strings.push(this);
   }
@@ -80,9 +100,44 @@ class String {
     this.#touchingOwnedTiles = hasTouchedTile;
   }
 
-  toggleAllOwnedTiles() {
+  // I used some public sites to help me calculate the sine wave (listed below):
+  //
+  // - Video Demo: https://www.youtube.com/watch?v=uqlz015kjV4&t=207s -> (Reference video of how I 
+  //   wanted the graph to behave)
+  //
+  // - Desmos Graph: https://www.desmos.com/calculator/m77fpdxscn -> (Used
+  //   to understand how to get the perpendicular angles of the line)
+  //
+  // - Example: https://stackoverflow.com/questions/46700368/angled-direction-sine-wave -> (A public
+  //   explanation of how to solve the problem)
+  updateAndDrawWave() {
+    let stringOrigin = this.#stringOrigin;
+    let displacementX = this.#totalDisplacementX;
+    let displacementY = this.#totalDisplacementY;
+
+    let displacementSlope = Math.hypot(displacementX, displacementY);
+    let perpendicularToSlopeX = (-displacementY / displacementSlope);
+    let perpendicularToSlopeY = (displacementX / displacementSlope);
+    let directionX = (displacementX / displacementSlope);
+    let directionY = (displacementY / displacementSlope);
+
     for (let tile of this.#ownedTiles) {
-      toggleTile(tile.y, tile.x);
+      let newPositionX = (tile.x - stringOrigin.x) * directionX;
+      let newPositionY = (tile.y - stringOrigin.y) * directionY;
+      let pointOnWave = (newPositionX + newPositionY);
+
+      let periodLength = this.#waveData.periodLength;
+      let amplitude = this.#waveData.amplitude;
+      let speed = this.#waveData.speed;
+
+      let phaseShift = ((FULL_CIRCLE_IN_RADIANS * pointOnWave) / periodLength) - (speed * frameCount);
+      let positionOnWave = (Math.sin(phaseShift) * amplitude);
+
+      let finalX = Math.round(tile.x + perpendicularToSlopeX * positionOnWave);
+      let finalY = Math.round(tile.y + perpendicularToSlopeY * positionOnWave);
+      let tileType = this.#stringType
+
+      toggleTile(finalY, finalX, tileType);
     }
   }
 }
@@ -114,7 +169,7 @@ function generateEmptyGrid(columns, rows) {
     newGrid.push([]);
 
     for (let row = 0; row < rows; row++) {
-      newGrid[col].push(BLANK_TILE_TYPE);
+      newGrid[col].push(STRING_CONSTANTS.TYPES.BLANK);
     }
   }
 
@@ -128,25 +183,46 @@ function draw() {
   visualizeGrid();
 }
 
-function toggleTile(col, row) {
+function toggleTile(col, row, tileType = STRING_CONSTANTS.TYPES.BLANK) {
   // edge checking
   if ((col >= 0 && col < columns) && (row >= 0 && row < rows)) {
-    if (grid[col][row] === BLANK_TILE_TYPE) {
-      grid[col][row] = CREATION_TILE_TYPE;
-    }
+    grid[col][row] = tileType;
   }
 }
 
 function updateGrid() {
+  grid = generateEmptyGrid(columns, rows);
+
+  for (let string of strings) {
+    string.updateAndDrawWave();
+  }
 }
 function visualizeGrid() {
   for (let col = 0; col < columns; col++) {
     for (let row = 0; row < rows; row++) {
-      if (grid[col][row] === BLANK_TILE_TYPE) {
-        fill(BLANK_TILE_COLOUR);
+      if (grid[col][row] === STRING_CONSTANTS.TYPES.BLANK) {
+        fill(STRING_CONSTANTS.COLOURS.BLANK);
       }
-      else if (grid[col][row] === CREATION_TILE_TYPE) {
-        fill(F_STRING_TILE_COLOUR);
+      else if (grid[col][row] === STRING_CONSTANTS.TYPES.A_STRING) {
+        fill(STRING_CONSTANTS.COLOURS.A_STRING);
+      }
+      else if (grid[col][row] === STRING_CONSTANTS.TYPES.B_STRING) {
+        fill(STRING_CONSTANTS.COLOURS.B_STRING);
+      }
+      else if (grid[col][row] === STRING_CONSTANTS.TYPES.C_STRING) {
+        fill(STRING_CONSTANTS.COLOURS.C_STRING);
+      }
+      else if (grid[col][row] === STRING_CONSTANTS.TYPES.D_STRING) {
+        fill(STRING_CONSTANTS.COLOURS.D_STRING);
+      }
+      else if (grid[col][row] === STRING_CONSTANTS.TYPES.E_STRING) {
+        fill(STRING_CONSTANTS.COLOURS.E_STRING);
+      }
+      else if (grid[col][row] === STRING_CONSTANTS.TYPES.F_STRING) {
+        fill(STRING_CONSTANTS.COLOURS.F_STRING);
+      }
+      else if (grid[col][row] === STRING_CONSTANTS.TYPES.G_STRING) {
+        fill(STRING_CONSTANTS.COLOURS.G_STRING);
       }
 
       square(row * CELL_SIZE, col * CELL_SIZE, CELL_SIZE);
@@ -185,8 +261,8 @@ function mousePressed() {
         ownedTiles.push(newOwnedTile);
       }
 
-      let newString = new String(lastWaveOrigin.x, lastWaveOrigin.y, lastWaveGoal.x, lastWaveGoal.y, CREATION_TILE_TYPE, ownedTiles);
-      newString.toggleAllOwnedTiles();
+      let randomType = Math.round(random(0, 7));
+      new String(lastWaveOrigin.x, lastWaveOrigin.y, lastWaveGoal.x, lastWaveGoal.y, randomType, ownedTiles);
     }
   }
 }
