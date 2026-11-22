@@ -252,9 +252,11 @@ class String {
     let mouseSuccessfullyHitString = (!this.#touchingOwnedTiles && hasTouchedTile);
     if (mouseSuccessfullyHitString) {
       if (hitStrength > this.#waveData.amplitude) {
-        // since the sound is slightly delayed, lets make it play first, and hopefully
-        // the user wont care too much.
-        this.#stringSound.play();
+        // since the sound is slightly delayed, lets make it play first. Also we
+        // need to make sure the sound actually exists too, just in case.
+        if (this.#stringSound) {
+          this.#stringSound.play();
+        }
 
         let newAmplitude = constrain((this.#waveData.amplitude + hitStrength), MIN_STRING_AMPLITUDE, MAX_STRING_AMPLITUDE);
         this.#waveData.amplitude = newAmplitude;
