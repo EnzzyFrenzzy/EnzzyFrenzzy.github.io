@@ -2,11 +2,26 @@
 // Milo Sadoway
 // 10-29-2026
 //
+// Used the following sites:
+// https://www.w3schools.com/jsref/jsref_object_values.asp
+// https://www.youtube.com/watch?v=uqlz015kjV4&t=207s
+// https://www.desmos.com/calculator/m77fpdxscn
+// https://stackoverflow.com/questions/46700368/angled-direction-sine-wave
+//
 // Extra for Experts:
+
+const STRING_CREATION_ADDITIONAL = 1;
+const HIT_STRENGTH_MULTIPLIER = 2;
+const MIN_STRING_HIT_STRENGTH = 2;
+const STRING_DETECTION_SIZE = 1;
+
+const FULL_CIRCLE_IN_RADIANS = (2 * Math.PI);
+const ONE_RADIAN = (Math.PI / 180);
+const STRING_SIZE_MIN = 12;
+const CELL_SIZE = 16;
 
 const STRING_CONSTANTS = {
   TYPES: {
-    BLANK: 0,
     A_STRING: 1,
     B_STRING: 2,
     C_STRING: 3,
@@ -16,7 +31,6 @@ const STRING_CONSTANTS = {
     G_STRING: 7,
   },
   COLOURS: {
-    BLANK: "Silver",
     A_STRING: "Red",
     B_STRING: "Orange",
     C_STRING: "Yellow",
@@ -25,17 +39,28 @@ const STRING_CONSTANTS = {
     F_STRING: "Purple",
     G_STRING: "Violet",
   },
-  WAVE_DATA: {},
+
+  // These are meant to represent differences in Hertz (definitely not accurately),
+  // so its best to just leave these values alone.
+  BLANK_WAVE_DATA: {
+    A_STRING: { periodLength: (CELL_SIZE * 3.5), speed: 0.18, amplitude: 0 },
+    B_STRING: { periodLength: (CELL_SIZE * 3.25), speed: 0.20, amplitude: 0 },
+    C_STRING: { periodLength: (CELL_SIZE * 3), speed: 0.22, amplitude: 0 },
+    D_STRING: { periodLength: (CELL_SIZE * 2.75), speed: 0.24, amplitude: 0 },
+    E_STRING: { periodLength: (CELL_SIZE * 2.5), speed: 0.26, amplitude: 0 },
+    F_STRING: { periodLength: (CELL_SIZE * 2.25), speed: 0.28, amplitude: 0 },
+    G_STRING: { periodLength: (CELL_SIZE * 2), speed: 0.3, amplitude: 0 },
+  },
 };
 
-const STRING_CREATION_ADDITIONAL = 1;
-const MIN_STRING_HIT_STRENGTH = 1;
-const STRING_DETECTION_SIZE = 1;
+// Seperate these from the STRING_CONSTANTS so that other code can access
+// the constants more easily, without needing to deal with these
+const BLANK_TILE_COLOUR = "Silver";
+const BLANK_TILE_TYPE = 0;
 
-const FULL_CIRCLE_IN_RADIANS = 2 * Math.PI;
-const ONE_RADIAN = Math.PI / 180;
-const STRING_SIZE_MIN = 12;
-const CELL_SIZE = 16;
+const STRING_DIMINISH_SPEED = 0.025;
+const MAX_STRING_AMPLITUDE = Math.floor(CELL_SIZE * 0.9);
+const MIN_STRING_AMPLITUDE = 0;
 
 class String {
   #stringOrigin;
@@ -47,11 +72,33 @@ class String {
 
   #totalDisplacementX;
   #totalDisplacementY;
-  #waveData = {
-    amplitude: 6,
-    periodLength: 25,
-    speed: 0.25,
-  };
+
+  #waveData;
+  #finalizeWaveData() {
+    let stringType = this.#stringType;
+
+    if (stringType === STRING_CONSTANTS.TYPES.A_STRING) {
+      this.#waveData = structuredClone(STRING_CONSTANTS.BLANK_WAVE_DATA.A_STRING);
+    }
+    else if (stringType === STRING_CONSTANTS.TYPES.B_STRING) {
+      this.#waveData = structuredClone(STRING_CONSTANTS.BLANK_WAVE_DATA.B_STRING);
+    }
+    else if (stringType === STRING_CONSTANTS.TYPES.C_STRING) {
+      this.#waveData = structuredClone(STRING_CONSTANTS.BLANK_WAVE_DATA.C_STRING);
+    }
+    else if (stringType === STRING_CONSTANTS.TYPES.D_STRING) {
+      this.#waveData = structuredClone(STRING_CONSTANTS.BLANK_WAVE_DATA.D_STRING);
+    }
+    else if (stringType === STRING_CONSTANTS.TYPES.E_STRING) {
+      this.#waveData = structuredClone(STRING_CONSTANTS.BLANK_WAVE_DATA.E_STRING);
+    }
+    else if (stringType === STRING_CONSTANTS.TYPES.F_STRING) {
+      this.#waveData = structuredClone(STRING_CONSTANTS.BLANK_WAVE_DATA.F_STRING);
+    }
+    else if (stringType === STRING_CONSTANTS.TYPES.G_STRING) {
+      this.#waveData = structuredClone(STRING_CONSTANTS.BLANK_WAVE_DATA.G_STRING);
+    }
+  }
 
   constructor(originX, originY, goalX, goalY, stringType, ownedTiles) {
     this.#stringOrigin = { x: originX, y: originY };
@@ -66,6 +113,7 @@ class String {
     this.#totalDisplacementX = displacementX;
     this.#totalDisplacementY = displacementY;
 
+    this.#finalizeWaveData()
     strings.push(this);
   }
 
@@ -93,8 +141,12 @@ class String {
       }
     }
 
-    if (!this.#touchingOwnedTiles && hasTouchedTile) {
-      console.log("I was Hit!");
+    let mouseSuccessfullyHitString = (!this.#touchingOwnedTiles && hasTouchedTile);
+    if (mouseSuccessfullyHitString) {
+      if (hitStrength > this.#waveData.amplitude) {
+        let newAmplitude = constrain((this.#waveData.amplitude + hitStrength), MIN_STRING_AMPLITUDE, MAX_STRING_AMPLITUDE);
+        this.#waveData.amplitude = newAmplitude;
+      }
     }
 
     this.#touchingOwnedTiles = hasTouchedTile;
@@ -116,35 +168,53 @@ class String {
     let displacementY = this.#totalDisplacementY;
 
     let displacementSlope = Math.hypot(displacementX, displacementY);
+    if (displacementSlope === 0) { // So we dont get any division errors
+      return;
+    }
+
     let perpendicularToSlopeX = (-displacementY / displacementSlope);
     let perpendicularToSlopeY = (displacementX / displacementSlope);
     let directionX = (displacementX / displacementSlope);
     let directionY = (displacementY / displacementSlope);
 
     for (let tile of this.#ownedTiles) {
-      let newPositionX = (tile.x - stringOrigin.x) * directionX;
-      let newPositionY = (tile.y - stringOrigin.y) * directionY;
-      let pointOnWave = (newPositionX + newPositionY);
-
       let periodLength = this.#waveData.periodLength;
       let amplitude = this.#waveData.amplitude;
       let speed = this.#waveData.speed;
 
-      let phaseShift = ((FULL_CIRCLE_IN_RADIANS * pointOnWave) / periodLength) - (speed * frameCount);
-      let positionOnWave = (Math.sin(phaseShift) * amplitude);
+      let finalX = tile.x;
+      let finalY = tile.y;
 
-      let finalX = Math.round(tile.x + perpendicularToSlopeX * positionOnWave);
-      let finalY = Math.round(tile.y + perpendicularToSlopeY * positionOnWave);
+      // If the amplitude is nothing/below out minimum, then we dont need to do all of these calculations,
+      // since it wont matter anyways! 
+      if (amplitude > MIN_STRING_AMPLITUDE) {
+        let newPositionX = (tile.x - stringOrigin.x) * directionX;
+        let newPositionY = (tile.y - stringOrigin.y) * directionY;
+        let pointOnWave = (newPositionX + newPositionY);
+
+        let phaseShift = ((FULL_CIRCLE_IN_RADIANS * pointOnWave) / periodLength) - (speed * frameCount);
+        let endClamps = Math.sin((Math.PI * pointOnWave) / displacementSlope);
+        let positionOnWave = ((Math.sin(phaseShift) * amplitude) * endClamps);
+
+        finalX = Math.round(tile.x + perpendicularToSlopeX * positionOnWave);
+        finalY = Math.round(tile.y + perpendicularToSlopeY * positionOnWave);
+      }
+
       let tileType = this.#stringType
-
       toggleTile(finalY, finalX, tileType);
     }
+
+    let newAmplitude = constrain((this.#waveData.amplitude -= STRING_DIMINISH_SPEED), MIN_STRING_AMPLITUDE, MAX_STRING_AMPLITUDE);
+    this.#waveData.amplitude = newAmplitude;
   }
 }
 
-let creatingWave = false;
 let lastWaveOrigin = { x: 0, y: 0 };
 let lastWaveGoal = { x: 0, y: 0 };
+let creatingWave = false;
+
+let currentStringSelection = STRING_CONSTANTS.TYPES.A_STRING;
+let stringSelectionIndex = 0;
 
 let strings = [];
 let columns;
@@ -169,7 +239,7 @@ function generateEmptyGrid(columns, rows) {
     newGrid.push([]);
 
     for (let row = 0; row < rows; row++) {
-      newGrid[col].push(STRING_CONSTANTS.TYPES.BLANK);
+      newGrid[col].push(BLANK_TILE_TYPE);
     }
   }
 
@@ -183,7 +253,7 @@ function draw() {
   visualizeGrid();
 }
 
-function toggleTile(col, row, tileType = STRING_CONSTANTS.TYPES.BLANK) {
+function toggleTile(col, row, tileType = BLANK_TILE_TYPE) {
   // edge checking
   if ((col >= 0 && col < columns) && (row >= 0 && row < rows)) {
     grid[col][row] = tileType;
@@ -200,8 +270,8 @@ function updateGrid() {
 function visualizeGrid() {
   for (let col = 0; col < columns; col++) {
     for (let row = 0; row < rows; row++) {
-      if (grid[col][row] === STRING_CONSTANTS.TYPES.BLANK) {
-        fill(STRING_CONSTANTS.COLOURS.BLANK);
+      if (grid[col][row] === BLANK_TILE_TYPE) {
+        fill(BLANK_TILE_COLOUR);
       }
       else if (grid[col][row] === STRING_CONSTANTS.TYPES.A_STRING) {
         fill(STRING_CONSTANTS.COLOURS.A_STRING);
@@ -261,8 +331,7 @@ function mousePressed() {
         ownedTiles.push(newOwnedTile);
       }
 
-      let randomType = Math.round(random(0, 7));
-      new String(lastWaveOrigin.x, lastWaveOrigin.y, lastWaveGoal.x, lastWaveGoal.y, randomType, ownedTiles);
+      new String(lastWaveOrigin.x, lastWaveOrigin.y, lastWaveGoal.x, lastWaveGoal.y, currentStringSelection, ownedTiles);
     }
   }
 }
@@ -276,10 +345,28 @@ function mouseMoved() {
   let distanceY = Math.abs(currentY - previousY);
   let hypotenuseOfDistance = Math.hypot(distanceX, distanceY);
 
-  let hitStrength = hypotenuseOfDistance;
+  let hitStrength = (hypotenuseOfDistance * HIT_STRENGTH_MULTIPLIER);
   if (hitStrength >= MIN_STRING_HIT_STRENGTH) {
     for (let string of strings) {
       string.onMouseHitOwnedTiles(previousX, previousY, currentX, currentY, hitStrength);
     }
   }
+}
+function mouseWheel(event) {
+  // the mouse wheel delta should be flipped, it feels nicer
+  if (event.delta > 0) {
+    stringSelectionIndex--;
+  }
+  else {
+    stringSelectionIndex++;
+  }
+
+  // This is just like getting the length of an array, but in an object instead. Used the site below:
+  //
+  // https://www.w3schools.com/jsref/jsref_object_values.asp
+  let totalNumberOfStringTypes = (Object.keys(STRING_CONSTANTS.TYPES).length - 1);
+  let stringTypes = Object.values(STRING_CONSTANTS.TYPES);
+
+  stringSelectionIndex = constrain(stringSelectionIndex, 0, totalNumberOfStringTypes);
+  currentStringSelection = stringTypes[stringSelectionIndex];
 }
