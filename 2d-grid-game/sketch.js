@@ -25,6 +25,9 @@ const F_STRING_TILE_COLOUR = "Purple";
 const G_STRING_TILE_COLOUR = "Violet";
 
 const STRING_CREATION_ADDITIONAL = 1;
+const MIN_STRING_HIT_STRENGTH = 1;
+const STRING_DETECTION_SIZE = 1;
+
 const ONE_RADIAN = Math.PI / 180;
 const STRING_SIZE_MIN = 12;
 const CELL_SIZE = 16;
@@ -35,14 +38,46 @@ class String {
   #stringType;
 
   #ownedTiles;
+  #touchingOwnedTiles = false;
 
   constructor(originX, originY, goalX, goalY, stringType, ownedTiles) {
-    this.#stringOrigin = { x: Math.floor(originX / CELL_SIZE), y: Math.floor(originY / CELL_SIZE) };
-    this.#stringGoal = { x: Math.floor(goalX / CELL_SIZE), y: Math.floor(goalY / CELL_SIZE) };
+    this.#stringOrigin = { x: originX, y: originY };
+    this.#stringGoal = { x: goalX, y: goalY };
     this.#stringType = stringType;
     this.#ownedTiles = ownedTiles;
 
     strings.push(this);
+  }
+
+  onMouseHitOwnedTiles(previousX, previousY, currentX, currentY, hitStrength) {
+    let stringOrigin = this.#stringOrigin;
+    let stringGoal = this.#stringGoal;
+
+    let withinBoundsX = ((previousX >= stringOrigin.x && previousX <= stringGoal.x) || (previousX <= stringOrigin.x && previousX >= stringGoal.x));
+    let withinBoundsY = ((previousY >= stringOrigin.y && previousY <= stringGoal.y) || (previousY <= stringOrigin.y && previousY >= stringGoal.y));
+    let hasTouchedTile = false;
+
+    if (withinBoundsX && withinBoundsY) {
+      for (let tile of this.#ownedTiles) {
+        let innerTileX = (tile.x - STRING_DETECTION_SIZE);
+        let outerTileX = (tile.x + STRING_DETECTION_SIZE);
+        let innerTileY = (tile.y - STRING_DETECTION_SIZE);
+        let outerTileY = (tile.y + STRING_DETECTION_SIZE);
+
+        let hitTileBoundsX = ((currentX >= innerTileX && currentX <= outerTileX) || (currentX <= innerTileX && currentX >= outerTileX));
+        let hitTileBoundsY = ((currentY >= innerTileY && currentY <= outerTileY) || (currentY <= innerTileY && currentY >= outerTileY));
+        if (hitTileBoundsX && hitTileBoundsY) {
+          hasTouchedTile = true;
+          break;
+        }
+      }
+    }
+
+    if (!this.#touchingOwnedTiles && hasTouchedTile) {
+      console.log("I was Hit!");
+    }
+
+    this.#touchingOwnedTiles = hasTouchedTile;
   }
 
   toggleAllOwnedTiles() {
@@ -55,8 +90,6 @@ class String {
 let creatingWave = false;
 let lastWaveOrigin = { x: 0, y: 0 };
 let lastWaveGoal = { x: 0, y: 0 };
-
-let mouseInteractingWithWave = false;
 
 let strings = [];
 let columns;
@@ -104,29 +137,6 @@ function toggleTile(col, row) {
   }
 }
 
-// function manipulateWaveViaMouseFlick() {
-//   let midway = Math.floor(height / 2 / CELL_SIZE);
-
-//   let previousPos = Math.floor(pmouseY / CELL_SIZE);
-//   let currentPos = Math.floor(mouseY / CELL_SIZE);
-
-//   if ((currentPos >= midway && previousPos <= midway) || (currentPos <= midway && previousPos >= midway)) {
-//     if (!mouseOnWave) {
-//       mouseOnWave = true;
-
-//       waveAmplitude = Math.abs(movedY);
-//       // wavePeriodLength = Math.abs(movedX / CELL_SIZE);
-//     }
-//   }
-//   else {
-//     mouseOnWave = false;
-//   }
-// }
-
-// function mouseMoved() {
-//   manipulateWaveViaMouseFlick();
-// }
-
 function updateGrid() {
 }
 function visualizeGrid() {
@@ -158,7 +168,7 @@ function mousePressed() {
 
     let distanceX = Math.floor(Math.abs(lastWaveOrigin.x - newX));
     let distanceY = Math.floor(Math.abs(lastWaveOrigin.y - newY));
-    let displacement = (distanceX ^ distanceX + distanceY ^ distanceX);
+    let displacement = Math.max(distanceX, distanceY);
 
     if ((distanceX >= STRING_SIZE_MIN) || (distanceY >= STRING_SIZE_MIN)) {
       lastWaveGoal = { x: newX, y: newY };
@@ -177,6 +187,23 @@ function mousePressed() {
 
       let newString = new String(lastWaveOrigin.x, lastWaveOrigin.y, lastWaveGoal.x, lastWaveGoal.y, CREATION_TILE_TYPE, ownedTiles);
       newString.toggleAllOwnedTiles();
+    }
+  }
+}
+function mouseMoved() {
+  let previousX = Math.floor(pmouseX / CELL_SIZE);
+  let previousY = Math.floor(pmouseY / CELL_SIZE);
+  let currentX = Math.floor(mouseX / CELL_SIZE);
+  let currentY = Math.floor(mouseY / CELL_SIZE);
+
+  let distanceX = Math.abs(currentX - previousX);
+  let distanceY = Math.abs(currentY - previousY);
+  let hypotenuseOfDistance = Math.hypot(distanceX, distanceY);
+
+  let hitStrength = hypotenuseOfDistance;
+  if (hitStrength >= MIN_STRING_HIT_STRENGTH) {
+    for (let string of strings) {
+      string.onMouseHitOwnedTiles(previousX, previousY, currentX, currentY, hitStrength);
     }
   }
 }
