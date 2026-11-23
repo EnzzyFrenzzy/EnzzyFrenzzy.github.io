@@ -16,6 +16,7 @@
 - [Character on a Grid](character-grid)
 - [Timeout](timeout)
 - [Set Interval](set-interval)
+- [Walker OOP](walker-oop)
 
 ## Projects
 - [Interactive Scene](interactive-scene)
