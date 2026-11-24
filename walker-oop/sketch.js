@@ -1,12 +1,12 @@
 // OOP demo
 
 class Walker {
-  constructor(x, y) {
+  constructor(x, y, colour) {
     this.x = x;
     this.y = y;
     this.speed = 5;
     this.diameter = 5;
-    this.colour = 'red';
+    this.colour = colour;
   }
 
   display() {
@@ -31,22 +31,35 @@ class Walker {
   }
 }
 
-let redWalker;
-let blueWalker;
+// let redWalker;
+// let blueWalker;
+
+let walkers = [];
 
 async function setup() {
   createCanvas(windowWidth, windowHeight);
   noStroke();
 
-  redWalker = new Walker((width * 0.25), height/2);
-  blueWalker = new Walker((width * 0.75), height/2);
-  blueWalker.colour = 'blue';
+  // redWalker = new Walker((width * 0.25), height/2);
+  // blueWalker = new Walker((width * 0.75), height/2);
+  // blueWalker.colour = 'blue';
 }
 
 function draw() {
-  redWalker.move();
-  blueWalker.move();
+  for (let walker of walkers) {
+    walker.move();
+    walker.display();
+  }
 
-  redWalker.display();
-  blueWalker.display();
+  // redWalker.move();
+  // blueWalker.move();
+
+  // redWalker.display();
+  // blueWalker.display();
+}
+
+function mousePressed() {
+  let newColour = color(random(255), random(255), random(255));
+  let newWalker = new Walker(mouseX, mouseY, newColour);
+  walkers.push(newWalker);
 }
