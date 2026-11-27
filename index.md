@@ -17,6 +17,7 @@
 - [Timeout](timeout)
 - [Set Interval](set-interval)
 - [Walker OOP](walker-oop)
+- [Fireworks](fireworks)
 
 ## Projects
 - [Interactive Scene](interactive-scene)
